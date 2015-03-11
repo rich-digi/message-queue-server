@@ -83,7 +83,7 @@ function list_messages($dmid, $start = 0, $limit = 50)
 			ORDER BY MsgID DESC
 			LIMIT '.$start.', '.$limit;
 	$res = $db->query_2_object($sql);
-	reply(count($res) ? $res : errobj('DMID '.$dmid.' has no messages'));
+	reply(count($res) ? $res : errobj('DMID '.$dmid.', start '.$start.', limit '.$limit.', - no matching messages'));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -91,7 +91,7 @@ function list_messages($dmid, $start = 0, $limit = 50)
 function get_message($msgid)
 {
 	global $db;
-	$sql = 'SELECT * FROM Messages WHERE MsgID='.$db->e($msgid);
+	$sql = 'SELECT * FROM Messages WHERE MsgID='.$db->n($msgid);
 	$res = $db->query_2_object($sql);
 	reply(count($res) ? $res[0] : errobj('Message with MsgID '.$msgid.' does not exist'));
 }
@@ -110,7 +110,6 @@ function delete_message($msgid)
 
 function reply($reply)
 {
-	global $db;
 	header('Content-Type: application/json');
 	echo json_encode($reply, JSON_PRETTY_PRINT);
 	exit;

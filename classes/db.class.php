@@ -277,7 +277,7 @@ class DB
 	// -------------------------------------------------------------------------------------------------
 	// Makes sure a number is a number
 
-	public function cleannum($num)
+	public function n($num)
 	{
 		return(is_numeric($num) ? $num : 'NULL');
 	}
@@ -285,7 +285,7 @@ class DB
 	// -------------------------------------------------------------------------------------------------
 	// Cleans booleans
 
-	public function cleanbool($bool)
+	public function b($bool)
 	{
 		return($bool ? 1 : 0);
 	}
