@@ -65,6 +65,8 @@ function create_message($dmid)
     $input = json_decode($body);
 	
 	// Set fields to save
+	
+	// ARRAY interesct!!! alllowred fileds;
 	$f = array(
 			'ToDMID' 	=> $dmid,
 			'From' 		=> $input->From,
@@ -123,8 +125,8 @@ function get_message($msgid)
 function delete_message($msgid)
 {
 	global $db;
-	$sql = 'UPDATE Messages SET Deleted=1 WHERE MsgID='.$db->i($msgid);
-	$res = $db->query($sql);
+	$f = array('MsgID' => $msgid, ,'Deleted' => 1);
+	$res = $db->save($f, MESSAGES_TABLE);
 	reply($res ? array('Deleted' => TRUE) : errobj('Message with MsgID '.$msgid.' does not exist'));
 }
 
