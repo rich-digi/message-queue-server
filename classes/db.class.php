@@ -23,7 +23,7 @@ class DB
 	// For emailing errors
 	const OUTPUTERRORS	= FALSE;
 	const EMAILERRORS	= FALSE;
-	const MAILFROM		= 'MQS DB Error Handler <donotreply@slm.loc>'; 
+	const MAILFROM		= 'MQS DB Error Handler <donotreply@mqs.loc>'; 
 	const MAILSUBJECT	= 'MQS DB Error Report - Database query failed'; 
 
 	// Class variables
@@ -39,15 +39,19 @@ class DB
 	protected $protect_read;			// Let only logged in users read from the database
 	protected $protect_write;			// Let only logged in users wtite to the database
 	
+	private $docroot;
 	private $mailto	= array('rich@apewave.com'); // For emailing errors
 
-	// -------------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
 	// Constructor
 
 	public function __construct($db_settings = NULL, $debugeron = FALSE)
 	{
 		// $db_settings can be an object containing host, user, pass, and db
 		// If not passed, use the db.settings class
+
+		$this->docroot = isset($_SERVER['DOCUMENT_ROOT']) ? $_SERVER['DOCUMENT_ROOT'] : '';
+		$this->docroot = substr($this->docroot, -1) == '/' ? $this->docroot : $this->docroot.'/';
 
 		$this->fields = new stdClass;
 
@@ -95,21 +99,21 @@ class DB
 		if (is_string($query))
 		{
 			$this->debug->msg($query);
-			$result = $this->mysqli->query($query);
+			$this->mysqli->query($query);
 			$this->handle_errors($query);
-			return $result;
+			return $this->affected_rows();
 		}
 		
 		// Assume query is an array, and treat as a multi_query
 		$this->debug->inspect(NULL, $query);
 		foreach($query as &$q) $q = str_replace(';', '\;', $q);
 		$query = implode(';', $query);
-		$result = $this->mysqli->multi_query($query);
+		$this->mysqli->multi_query($query);
 		$this->handle_errors($query);
-		return $result;
+		return $this->affected_rows();
 	}
 
-	// -------------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
 	// Runs a query and returns the result set as an array
 
 	public function query_2_array($query, $type = MYSQL_ASSOC)
@@ -129,7 +133,7 @@ class DB
 		return $result;		
 	}
 	
-	// -------------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
 	// Runs a query and returns the result as an object
 	
 	public function query_2_object($query)
@@ -142,12 +146,11 @@ class DB
 		while ($row = $myqres->fetch_object()) $result[] = $row;
 		$myqres->free();
 		$this->handle_errors($query);
-		// if (count($result) === 1) $result = $result[0];
 		$this->debug->inspect('First few results...', array_slice($result, 0, 5));
 		return $result;		
 	}
 	
-	// -------------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
 	// Count number of rows query returned ( SELECT )
 
 	public function count_rows($query)
@@ -163,7 +166,7 @@ class DB
 		return $rows;
 	}
 
-	// -------------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
 	// Count affected rows (UPDATE / DELETE )
 
 	public function affected_rows()
@@ -172,7 +175,7 @@ class DB
 		return $mysqli->affected_rows;
 	}
 
-	// ----------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
 	// Get the ID of the item added in the last run query
 
 	public function get_insert_id()
@@ -181,7 +184,7 @@ class DB
 		return $this->mysqli->insert_id;
 	}
 
-	// -------------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
 	// Get information about the fields in the table
 
 	public function fields_2_array($table = NULL)
@@ -233,11 +236,13 @@ class DB
 	
 	// ---------------------------------------------------------------------------------------------
 
-	public function load($id)
+	public function load($id, $table = NULL)
 	{
 		$this->debug->heading(__FUNCTION__ . '(' . $id . ')');
 
 		$this->db_read_check();
+			
+		if ($table) $this->set_table($table);
 		$id = (int) $id; // Anti-hack attack
 		$sql = 'SELECT * FROM ' . $this->table . ' WHERE ' . $this->autid . '=' . $id;
 		$res = $this->query_2_object($sql);
@@ -249,9 +254,10 @@ class DB
 
 	// ---------------------------------------------------------------------------------------------
 
-	public function save($id = NULL)
+	public function save($id = NULL, $table = NULL)
 	{
 		$this->db_write_check();
+		if ($table) $this->set_table($table);
 		if (!$id)
 		{
 			if (isset($this->{$this->autid})) $id = $this->{$this->autid};
@@ -263,10 +269,10 @@ class DB
 		return($rows ? $this->update() : $this->add()); 
 	}
 
-	// -------------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
 	// DATA SANITIZATION
 	
-	// -------------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
 	// Adds required slashes to strings for DB entry
 
 	public function e($str)
@@ -274,15 +280,22 @@ class DB
 		return $this->mysqli->real_escape_string($str);
 	}
 
-	// -------------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
 	// Makes sure a number is a number
+
+	public function i($integer)
+	{
+		return (int) $integer
+	}
+
+	// ---------------------------------------------------------------------------------------------
 
 	public function n($num)
 	{
 		return(is_numeric($num) ? $num : 'NULL');
 	}
 
-	// -------------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
 	// Cleans booleans
 
 	public function b($bool)
@@ -375,12 +388,39 @@ class DB
 	private function handle_errors($extra = '')
 	{
 		$error = @$this->mysqli->error;
-		$this->debug->err($error);
 		if ($error)
 		{
-			$errortext = 'There has been a SQL error<br /><strong>Error Text:</strong> ' . $error;
-			$errortext .= $extra ?  '<br />'.$extra : '';
-			$this->debug->err($errortext);
+			$errortext  = '<h3>There has been a SQL error</h3><p><b>Error Text:</b> '.$error.'</p>';
+			$errortext .= $query = '' ?  '' : '<p><b>SQL String:</b></p><pre>'.$query.'</pre>';
+			$s = $_SERVER;
+			unset(
+					$s['HTTP_CACHE_CONTROL'], $s['HTTP_CONNECTION'], $s['HTTP_PRAGMA'], $s['HTTP_ACCEPT'],
+					$s['HTTP_ACCEPT_ENCODING'], $s['HTTP_HOST'], $s['SERVER_SIGNATURE'],
+					$s['SERVER_SOFTWARE'], $s['SERVER_NAME'], $s['SERVER_ADDR'], $s['SERVER_PORT'],
+					$s['DOCUMENT_ROOT'], $s['SERVER_ADMIN'], $s['GATEWAY_INTERFACE'], $s['REMOTE_PORT']
+				);
+			$errortext .= '<p><b>URL:</b> '.$s['REQUEST_URI'].'</p>';
+			$errortext .= '<p><b>Referrer:</b> '.(isset($s['HTTP_REFERER']) ? $s['HTTP_REFERER'] : '').'</p>';
+			$errortext .= '<br><pre>'.print_r($s, 1).'</pre>';
+			$errortext .= '<p><b>Trace:</b></p>';
+			
+			$bt = debug_backtrace();
+			array_shift($bt);
+			foreach($bt as &$step)
+			{
+				$line = $step['line'];
+				unset($step['line']);
+				if (isset($step['file'])) 	$step['file'] = str_replace($this->docroot, '', $step['file']);
+				if (isset($step['object'])) unset($step['object']);
+				if (isset($step['type'])) 	unset($step['type']);
+				if (isset($step['function'])) $step['function'] = '<font color="red"><b>'.$step['function'].'</b> - line '.$line.'</font>';
+			}
+			$trace_text = print_r($bt, 1);
+			$trace_text = substr(str_replace('Array', '', $trace_text), 2, -2);
+			$trace_text = preg_replace('/^    \[(\d+)\]/m', "<b color='blue'>Step $1</b>", $trace_text);
+			$errortext .= '<br><pre>'.$trace_text.'</pre>';
+			
+			$this->debug->msg($errortext);
 			if (self::EMAILERRORS) $this->mail_error($errortext);
 			if (self::OUTPUTERRORS) echo('<br /><br />' . $errortext . '<br /><br />');
 		}
@@ -400,6 +440,6 @@ class DB
 		}
 	}
 
-	// -------------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
 
 }

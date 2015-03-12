@@ -12,7 +12,7 @@ class DBsettings
 
 	public function __construct()
 	{
-		$this->sock	= NULL; // We don't usually connect through a sockedt, but can by setting this below
+		$this->sock	= NULL; // We don't usually connect through a socket, but can by setting this below
 
 		$location = Location::get_location();
 		switch($location)
