@@ -6,14 +6,8 @@
 // Class for reading from and writing to the database!
 // -------------------------------------------------------------------------------------------------
 
-if (!isset($docroot))
-{
-	$docroot = $_SERVER['DOCUMENT_ROOT'];
-	$docroot = substr($docroot, -1) == '/' ? $docroot : $docroot.'/';
-}
-
-include_once($docroot.'classes/dbsettings.class.php');
-include_once($docroot.'classes/debug.class.php');
+include_once('dbsettings.class.php');
+include_once('debug.class.php');
 
 class DB
 {
@@ -125,7 +119,7 @@ class DB
 		$myqres = $this->mysqli->query($query);	
 		if ($myqres)
 		{
-			while ($row = $myqres->fetch_array($type)) $result[] = $row;
+			while($row = $myqres->fetch_array($type)) $result[] = $row;
 			$myqres->free();
 		}
 		$this->handle_errors($query);
@@ -143,7 +137,7 @@ class DB
 
 		$result = array();
 		$myqres = $this->mysqli->query($query);	   
-		while ($row = $myqres->fetch_object()) $result[] = $row;
+		while($row = $myqres->fetch_object()) $result[] = $row;
 		$myqres->free();
 		$this->handle_errors($query);
 		$this->debug->inspect('First few results...', array_slice($result, 0, 5));
@@ -285,7 +279,7 @@ class DB
 
 	public function i($integer)
 	{
-		return (int) $integer
+		return (int) $integer;
 	}
 
 	// ---------------------------------------------------------------------------------------------

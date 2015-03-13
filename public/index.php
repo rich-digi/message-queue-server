@@ -2,7 +2,11 @@
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
+//
 // MQS: Message Queue Server
+//
+// Uses: Slim, Twig and Monolog
+//
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
@@ -15,12 +19,12 @@ require_once '../classes/db.class.php';
 
 $app = new \Slim\Slim();
 $app->config('debug', TRUE);
-$app->config('templates.path' => '../templates');
+$app->config('templates.path', '../templates');
 
 // Create monolog logger and store logger in container as singleton 
 // (Singleton resources retrieve the same log resource definition each time)
 $app->container->singleton('log', function () {
-    $log = new \Monolog\Logger('slim-skeleton');
+    $log = new \Monolog\Logger('MQS');
     $log->pushHandler(new \Monolog\Handler\StreamHandler('../logs/app.log', \Monolog\Logger::DEBUG));
     return $log;
 });
@@ -43,6 +47,8 @@ $app->view->parserExtensions = array(new \Slim\Views\TwigExtension());
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
+// (1) MQS API routes...
+
 $app->get 	('/', 									'identify');
 $app->put 	('/messages/:dmid', 	 				'create_message');
 $app->post	('/messages/:msgid', 		 			'update_message');
@@ -51,6 +57,19 @@ $app->get 	('/messages/:dmid(/:start)(/:limit)', 	'list_messages')->conditions(a
 $app->get 	('/messages/:msgid', 		 			'get_message')->conditions(array('msgid' => '\d+'));
 $app->delete('/messages/:msgid', 		 			'delete_message');
 
+
+// (2) MQS admin area routes...
+
+$app->get('/admin', function () use ($app)
+{
+	$app->log->info("MQS '/admin' route");
+	$app->render('index.tmp.html', array('name' => 'Rich'));
+});
+
+$app->get('/admin/create', function () use ($app)
+{
+	$app->render('create.tmp.html', array('name' => 'Rich'));
+});
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
@@ -79,20 +98,34 @@ function identify()
 function create_message($dmid)
 {
 	global $db;
+	$app = \Slim\Slim::getInstance();
 	
     $request = $app->request();
     $body = $request->getBody();
     $input = json_decode($body);
+
+ 	//$keys=array("a","b","c","d");
+ 	//array_fill_keys($keys, '');
+    //$input = (object) array_merge(array_flip(explode('')) $obj2, (array) $input);
+
+
+
+	print_r($input); exit;
 	
+
+
 	// Set fields to save
-	
-	// ARRAY interesct!!! alllowred fileds;
+	// ARRAY interesct!!! alllowed fields;
 	$f = array(
-			'ToDMID' 	=> $dmid,
-			'From' 		=> $input->From,
-			'ReplyTo' 	=> $input->ReplyTo,
-			'Subject'	=> $input->Subject,
-			'Content'	=> $input->Content
+			'ToDMID' 			=> $dmid,
+			'From' 				=> $input->From,
+			'ReplyTo' 			=> $input->ReplyTo,
+			'Template' 			=> $input->Template,
+			'Creator' 			=> $input->Creator,
+			'Priority' 			=> $input->Priority,
+			'DeleteAfterDays' 	=> $input->DeleteAfterDays,
+			'Subject'			=> $input->Subject,
+			'Content'			=> $input->Content
 	);
 	$res = $db->save($f, MESSAGES_TABLE);
 	reply($res);
@@ -103,7 +136,26 @@ function create_message($dmid)
 function update_message($msgid)
 {
 	global $db;
-	$sql = '';
+	$app = \Slim\Slim::getInstance();
+
+    $request = $app->request();
+    $body = $request->getBody();
+    $input = json_decode($body);
+	
+	// Set fields to save
+	// ARRAY interesct!!! alllowed fields;
+	$f = array(
+			'MsgID'				=> $msgid,
+			'ToDMID' 			=> $input->ToDMID,
+			'From' 				=> $input->From,
+			'ReplyTo' 			=> $input->ReplyTo,
+			'Template' 			=> $input->Template,
+			'Creator' 			=> $input->Creator,
+			'Priority' 			=> $input->Priority,
+			'DeleteAfterDays' 	=> $input->DeleteAfterDays,
+			'Subject'			=> $input->Subject,
+			'Content'			=> $input->Content
+	);
 	$res = $db->save($f, MESSAGES_TABLE);
 	reply($res);
 }
@@ -113,7 +165,7 @@ function update_message($msgid)
 function count_messages($dmid)
 {
 	global $db;
-	$sql = 'SELECT COUNT(MsgID) FROM '.MESSAGES_TABLE.' WHERE ToDMID="'.$db->e($dmid).'" AND Deleted=0'
+	$sql = 'SELECT COUNT(MsgID) AS MessageCount FROM '.MESSAGES_TABLE.' WHERE ToDMID="'.$db->e($dmid).'" AND Deleted=0';
 	$res = $db->query_2_object($sql);
 	reply($res[0]);
 }
@@ -123,7 +175,7 @@ function count_messages($dmid)
 function list_messages($dmid, $start = 0, $limit = 50)
 {
 	global $db;
-	$sql = 'SELECT MsgID, Subject, CreatedGMT FROM '.MESSAGES_TABLE.'. 
+	$sql = 'SELECT MsgID, Subject, `From`, CreatedGMT FROM '.MESSAGES_TABLE.' 
 			WHERE ToDMID="'.$db->e($dmid).'" AND Deleted=0
 			ORDER BY MsgID DESC
 			LIMIT '.$db->i($start).', '.$db->i($limit);
@@ -137,7 +189,7 @@ function get_message($msgid)
 {
 	global $db;
 	$res = $db->load($msgid, MESSAGES_TABLE);
-	reply(count($res) ? $res : errobj('Message with MsgID '.$msgid.' does not exist'));
+	reply($res ? $res : errobj('Message with MsgID '.$msgid.' does not exist'));
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -145,11 +197,10 @@ function get_message($msgid)
 function delete_message($msgid)
 {
 	global $db;
-	$f = array('MsgID' => $msgid, ,'Deleted' => 1);
+	$f = array('MsgID' => $msgid, 'Deleted' => 1);
 	$res = $db->save($f, MESSAGES_TABLE);
 	reply($res ? array('Deleted' => TRUE) : errobj('Message with MsgID '.$msgid.' does not exist'));
 }
-
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------

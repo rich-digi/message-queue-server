@@ -1,0 +1,14 @@
+body
+{
+	background-color: #451700;
+}
+
+header h1
+{
+	color: orange;
+}
+
+.ink-form .control-group.required label
+{
+	color: #AAA;
+}
