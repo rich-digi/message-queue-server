@@ -135,14 +135,14 @@
 			InkEvent.observe(form, 'submit', function(event)
 			{
 				InkEvent.stopDefault(event);
-				var oSerialize = FormSerialize.serialize(form);
-				var uri = '/messages/'+oSerialize.ToDMID;
-				delete oSerialize.ToDMID;
-				Ink.log(uri, oSerialize); 
+				var f = FormSerialize.serialize(form);
+				var uri = '/messages/'+f.ToDMID;
+				delete f.ToDMID;
+				Ink.log(uri, f); 
 				
 				new Ajax(uri, {
-					method: 'PUT',
-					postBody: JSON.stringify(oSerialize),
+					method: 'POST',
+					postBody: JSON.stringify(f),
 					onInit: function(obj) {
 						Ink.log('Init request');
 					}, 
