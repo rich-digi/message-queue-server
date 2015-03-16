@@ -5,7 +5,7 @@
 //
 // MQS: Message Queue Server
 //
-// Uses: Slim, Twig and Monolog
+// Uses: Slim, Twig and Monolog + Ink Interface Framework (on the front-end)
 //
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
@@ -21,22 +21,26 @@ $app = new \Slim\Slim();
 $app->config('debug', TRUE);
 $app->config('templates.path', '../templates');
 
+// Add authentication Middleware
+$app->add(new Auth());
+
 // Create monolog logger and store logger in container as singleton 
-// (Singleton resources retrieve the same log resource definition each time)
-$app->container->singleton('log', function () {
+// Singleton resources retrieve the same log resource definition each time
+$app->container->singleton('log', function ()
+{
     $log = new \Monolog\Logger('MQS');
     $log->pushHandler(new \Monolog\Handler\StreamHandler('../logs/app.log', \Monolog\Logger::DEBUG));
     return $log;
 });
 
-// Prepare view
+// Prepare view hanlers, with Twig templating engine
 $app->view(new \Slim\Views\Twig());
 $app->view->parserOptions = array(
-    'charset' => 'utf-8',
-    'cache' => realpath('../templates/cache'),
-    'auto_reload' => true,
-    'strict_variables' => false,
-    'autoescape' => true
+    'charset' 			=> 'utf-8',
+    'cache' 			=> realpath('../templates/cache'),
+    'auto_reload' 		=> TRUE,
+    'strict_variables' 	=> FALSE,
+    'autoescape' 		=> TRUE
 );
 $app->view->parserExtensions = array(new \Slim\Views\TwigExtension());
 
@@ -60,13 +64,13 @@ $app->delete('/messages/:msgid', 		 			'delete_message');
 
 // (2) MQS admin area routes...
 
-$app->get('/admin', function () use ($app)
+$app->get('/admin', 'authenticate', function () use ($app)
 {
 	// $app->log->info("MQS '/admin' route");
 	$app->render('index.tmp.html', array('name' => 'Rich'));
 });
 
-$app->get('/admin/create', function () use ($app)
+$app->get('/admin/create', 'authenticate', function () use ($app)
 {
 	$app->render('create.tmp.html', array('name' => 'Rich', 'v' => 'create'));
 });
@@ -100,6 +104,11 @@ $app->get('/admin/edit/:msgid', function ($msgid) use ($app)
 // Initialise database connection and run the app
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
+
+
+class ResourceNotFoundException extends Exception {}
+
+
 
 $db = new DB(NULL, TRUE);
 $app->run();
@@ -178,7 +187,29 @@ function list_messages($dmid, $start = 0, $limit = 50)
 function get_message($msgid)
 {
 	global $db;
-	$res = $db->load($msgid, MESSAGES_TABLE);
+	try
+	{
+		$res = $db->load($msgid, MESSAGES_TABLE);
+		if ($res)
+		{
+			
+		}
+		else
+		{
+		
+		}
+	}
+	catch (ResourceNotFoundException $e)
+	{
+		// Return 404  Not Found
+		$app->response()->status(404);
+	}
+	catch (Exception $e)
+	{
+		$app->response()->status(400);
+		$app->response()->header('X-Status-Reason', $e->getMessage());
+	}
+
 	reply($res ? $res : errobj('Message with MsgID '.$msgid.' does not exist'));
 }
 
@@ -198,9 +229,31 @@ function delete_message($msgid)
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
+function authenticate(\Slim\Route $route)
+{
+    // Route middleware for simple API authentication
+	$app = \Slim\Slim::getInstance();
+	$uid = $app->request->headers->get('UID');
+	$key = $app->request->headers->get('KEY');
+    if (validateUserKey($uid, $key) === FALSE) $app->halt(401); // 401 Authorization Required
+}
+
+// -------------------------------------------------------------------------------------------------
+
+function validateUserKey($uid, $key)
+{
+	// We'll flesh out authetication later...
+	$res = $uid == '' && $key == '';
+	// return $res;
+	return TRUE;
+}
+
+// -------------------------------------------------------------------------------------------------
+
 function reply($reply)
 {
-	header('Content-Type: application/json');
+	$app = \Slim\Slim::getInstance();
+	$app->response()->header('Content-Type', 'application/json');
 	echo json_encode($reply, JSON_PRETTY_PRINT);
 	exit;
 }
