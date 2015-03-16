@@ -50,8 +50,8 @@ $app->view->parserExtensions = array(new \Slim\Views\TwigExtension());
 // (1) MQS API routes...
 
 $app->get 	('/', 									'identify');
-$app->put 	('/messages/:dmid', 	 				'create_message');
-$app->post	('/messages/:msgid', 		 			'update_message');
+$app->post 	('/messages/:dmid', 	 				'create_message');
+$app->put	('/messages/:msgid', 		 			'update_message');
 $app->get 	('/messages/:dmid/count', 				'count_messages');
 $app->get 	('/messages/:dmid(/:start)(/:limit)', 	'list_messages')->conditions(array('dmid' => EMAIL_REGEX));
 $app->get 	('/messages/:msgid', 		 			'get_message')->conditions(array('msgid' => '\d+'));
@@ -62,14 +62,38 @@ $app->delete('/messages/:msgid', 		 			'delete_message');
 
 $app->get('/admin', function () use ($app)
 {
-	$app->log->info("MQS '/admin' route");
+	// $app->log->info("MQS '/admin' route");
 	$app->render('index.tmp.html', array('name' => 'Rich'));
 });
 
 $app->get('/admin/create', function () use ($app)
 {
-	$app->render('create.tmp.html', array('name' => 'Rich'));
+	$app->render('create.tmp.html', array('name' => 'Rich', 'v' => 'create'));
 });
+
+$app->get('/admin/list', function () use ($app)
+{
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $_SERVER['HTTP_HOST'].'/messages/rich@apewave.com');
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+	$res = curl_exec($ch);
+	curl_close($ch);
+	$res = json_decode($res);
+	$app->render('list.tmp.html', array('name' => 'Rich', 'v' => 'list', 'messages' => $res));
+});
+
+$app->get('/admin/edit/:msgid', function ($msgid) use ($app)
+{
+	$ch = curl_init();
+	curl_setopt($ch, CURLOPT_URL, $_SERVER['HTTP_HOST'].'/messages/'.$msgid);
+	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+	$res = curl_exec($ch);
+	curl_close($ch);
+	$res = json_decode($res);
+	$res->MsgID = $msgid;
+	$app->render('edit.tmp.html', array('name' => 'Rich', 'v' => 'edit', 'message' => $res));
+});
+
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
@@ -102,33 +126,12 @@ function create_message($dmid)
 	
     $request = $app->request();
     $body = $request->getBody();
-    $input = json_decode($body);
-
- 	//$keys=array("a","b","c","d");
- 	//array_fill_keys($keys, '');
-    //$input = (object) array_merge(array_flip(explode('')) $obj2, (array) $input);
-
-
-
-	print_r($input); exit;
-	
-
-
-	// Set fields to save
-	// ARRAY interesct!!! alllowed fields;
-	$f = array(
-			'ToDMID' 			=> $dmid,
-			'From' 				=> $input->From,
-			'ReplyTo' 			=> $input->ReplyTo,
-			'Template' 			=> $input->Template,
-			'Creator' 			=> $input->Creator,
-			'Priority' 			=> $input->Priority,
-			'DeleteAfterDays' 	=> $input->DeleteAfterDays,
-			'Subject'			=> $input->Subject,
-			'Content'			=> $input->Content
-	);
-	$res = $db->save($f, MESSAGES_TABLE);
-	reply($res);
+    $f = (array) json_decode($body);
+    $f['CreatedGMT'] = gmdate('Y-m-d H:i:s');
+	$db->fields = array_filter($f);
+	$db->fields['ToDMID'] = $dmid;
+	$res = $db->save(MESSAGES_TABLE);
+	reply($res ? array('MsgID' => $res) : errobj('Could not create message'));
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -140,24 +143,11 @@ function update_message($msgid)
 
     $request = $app->request();
     $body = $request->getBody();
-    $input = json_decode($body);
-	
-	// Set fields to save
-	// ARRAY interesct!!! alllowed fields;
-	$f = array(
-			'MsgID'				=> $msgid,
-			'ToDMID' 			=> $input->ToDMID,
-			'From' 				=> $input->From,
-			'ReplyTo' 			=> $input->ReplyTo,
-			'Template' 			=> $input->Template,
-			'Creator' 			=> $input->Creator,
-			'Priority' 			=> $input->Priority,
-			'DeleteAfterDays' 	=> $input->DeleteAfterDays,
-			'Subject'			=> $input->Subject,
-			'Content'			=> $input->Content
-	);
-	$res = $db->save($f, MESSAGES_TABLE);
-	reply($res);
+    $f = (array) json_decode($body);
+	$db->fields = array_filter($f);
+	$db->fields['MsgID'] = $msgid;
+	$res = $db->save(MESSAGES_TABLE);
+	reply($res ? array('Updated' => TRUE) : errobj('Could not update message'));
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -197,8 +187,8 @@ function get_message($msgid)
 function delete_message($msgid)
 {
 	global $db;
-	$f = array('MsgID' => $msgid, 'Deleted' => 1);
-	$res = $db->save($f, MESSAGES_TABLE);
+	$db->fields = array('MsgID' => $msgid, 'Deleted' => 1);
+	$res = $db->save(MESSAGES_TABLE);
 	reply($res ? array('Deleted' => TRUE) : errobj('Message with MsgID '.$msgid.' does not exist'));
 }
 

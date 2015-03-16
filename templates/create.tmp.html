@@ -1,0 +1,76 @@
+{% extends "base.tmp.html" %}
+
+{% block content %}
+
+<div>
+
+	<div class="column-group gutters">
+		<form action="" id="create_message" class="ink-form all-50 small-100 tiny-100">
+			<fieldset>
+				<div class="control-group required column-group gutters">
+					<label for="email" class="all-20 align-right">To</label>
+					<div class="control all-80">
+						<input type="text" name="ToDMID">
+					</div>
+				</div>
+				<div class="control-group required column-group gutters">
+					<label for="email" class="all-20 align-right">Subject</label>
+					<div class="control all-80">
+						<input type="text" name="Subject">
+					</div>
+				</div>
+				<div class="control-group required column-group gutters">
+					<label for="area" class="all-20 align-right">Content</label>
+					<div  class="control all-80">
+						<textarea name="Content"></textarea>
+					</div>
+				</div>
+				 <div class="control-group column-group gutters">
+					<div class="all-20"></div>
+					<div class="control all-80">
+						<button type="submit" class="ink-button orange">Create Message</button>
+					</div>
+				</div>
+			</fieldset>
+		</form>
+	</div>
+
+</div>
+
+<script>
+
+Ink.requireModules(['Ink.Net.Ajax_1', 'Ink.Dom.Event_1', 'Ink.Dom.FormSerialize_1'], function(Ajax, InkEvent,  FormSerialize) {
+	var form = Ink.i('create_message');
+	InkEvent.observe(form, 'submit', function(event)
+	{
+		InkEvent.stopDefault(event);
+		var f = FormSerialize.serialize(form);
+		var uri = '/messages/'+f.ToDMID;
+		delete f.ToDMID;
+		Ink.log(uri, f); 
+		
+		new Ajax(uri, {
+			method: 'POST',
+			postBody: JSON.stringify(f),
+			onSuccess: function(xhrObj, req) {
+				Ink.log(xhrObj.responseJSON);
+			}, 
+			onFailure: function() {
+				Ink.log('Request failed');
+			},
+			on404: function() {
+				Ink.log('404 request');
+			}, 
+			onTimeout: function() {
+				Ink.log('Request timeout');
+			},
+			timeout: 5
+		});
+
+	});
+});
+
+</script>
+
+{% endblock content %}
+

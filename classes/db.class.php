@@ -165,8 +165,8 @@ class DB
 
 	public function affected_rows()
 	{
-		$this->debug->heading(__FUNCTION__.' = '.$mysqli->affected_rows);
-		return $mysqli->affected_rows;
+		$this->debug->heading(__FUNCTION__.' = '.$this->mysqli->affected_rows);
+		return $this->mysqli->affected_rows;
 	}
 
 	// ---------------------------------------------------------------------------------------------
@@ -248,17 +248,13 @@ class DB
 
 	// ---------------------------------------------------------------------------------------------
 
-	public function save($id = NULL, $table = NULL)
+	public function save($table = NULL)
 	{
 		$this->db_write_check();
 		if ($table) $this->set_table($table);
-		if (!$id)
-		{
-			if (isset($this->{$this->autid})) $id = $this->{$this->autid};
-			if (isset($this->fields->{$this->autid})) $id = $this->fileds->{$this->autid};
-		}
-		$sql = 'SELECT ' . $this->autid . ' FROM ' . $this->table . '
-				WHERE  ' . $this->autid . ' = ' . (int) $this->{$this->autid};
+		$id = isset($this->fields[$this->autid]) ? $this->fields[$this->autid] : 0;
+		$sql = 'SELECT '.$this->autid . ' FROM '.$this->table . '
+				WHERE  '.$this->autid . ' = '.(int) $id;
 		$rows = $this->count_rows($sql); 
 		return($rows ? $this->update() : $this->add()); 
 	}
@@ -309,15 +305,15 @@ class DB
 	{
 		$this->db_write_check();
 		unset($this->fields->{$this->autid}); // Safety feature
-		$fields = implode(', ', array_keys((array) $this->fields));
+		$fields = implode(', ', array_keys(array_map('self::tick', (array) $this->fields)));
 		$values = '';
 		foreach($this->fields as $value) $values .= '"' . $this->mysqli->real_escape_string($value) . '", ';
 		$values = substr($values, 0, -2);
-		$sql = 'INSERT INTO ' . $this->table . ' (' . $fields . ') VALUES (' . $values . ')';
+		$sql = 'INSERT INTO '.$this->table . ' ('.$fields.') VALUES ('.$values.')';
 		$res = $this->query($sql);
 		if (!$res) return FALSE;
 		$this->extract_into_vars($this->fields); // Keep object up to date
-		$this->{$this->autid} = $this->db->get_insert_id();
+		$this->{$this->autid} = $this->get_insert_id();
 		return($this->{$this->autid});
 	}
 	
@@ -326,16 +322,16 @@ class DB
 	private function update()
 	{
 		$this->db_write_check();
-		unset($this->fields->{$this->autid}); 					// Safety feature
-		$this->{$this->autid} = (int) $this->{$this->autid};	// Force integer
+		$autid = (int) $this->fields[$this->autid];	// Force integer
+		unset($this->fields[$this->autid]);
 		$assignments = '';
-		foreach($this->fields as $field => $value) $assignments .= $field . '="' . $this->mysqli->real_escape_string($value) . '", ';
+		foreach($this->fields as $field => $value) $assignments .= self::tick($field).'="'.$this->mysqli->real_escape_string($value).'", ';
 		$assignments = substr($assignments, 0, -2);
-		$sql = 'UPDATE ' . $this->table . ' SET ' . $assignments . ' WHERE ' . $this->autid . ' = ' . $this->{$this->autid};
+		$sql = 'UPDATE '.$this->table . ' SET '.$assignments . ' WHERE '.$this->autid.' = '.$autid;
 		$res = $this->query($sql);
 		if (!$res) return FALSE;
 		$this->extract_into_vars($this->fields); // Keep object up to date
-		return($this->{$this->autid});
+		return($autid);
 	}
 	
 	// ---------------------------------------------------------------------------------------------
@@ -364,6 +360,7 @@ class DB
 	private function extract_into_vars($result)
 	{
 		if (!is_object($result) && !is_array($result)) return FALSE;
+		$this->res = new stdClass;
 		foreach($result as $name => $value) $this->res->{$name} = $value;
 		return TRUE;
 	}
@@ -385,7 +382,7 @@ class DB
 		if ($error)
 		{
 			$errortext  = '<h3>There has been a SQL error</h3><p><b>Error Text:</b> '.$error.'</p>';
-			$errortext .= $query = '' ?  '' : '<p><b>SQL String:</b></p><pre>'.$query.'</pre>';
+			// $errortext .= $query = '' ?  '' : '<p><b>SQL String:</b></p><pre>'.$query.'</pre>';
 			$s = $_SERVER;
 			unset(
 					$s['HTTP_CACHE_CONTROL'], $s['HTTP_CONNECTION'], $s['HTTP_PRAGMA'], $s['HTTP_ACCEPT'],
@@ -398,6 +395,7 @@ class DB
 			$errortext .= '<br><pre>'.print_r($s, 1).'</pre>';
 			$errortext .= '<p><b>Trace:</b></p>';
 			
+			/* Doesn't work in Slim
 			$bt = debug_backtrace();
 			array_shift($bt);
 			foreach($bt as &$step)
@@ -413,7 +411,8 @@ class DB
 			$trace_text = substr(str_replace('Array', '', $trace_text), 2, -2);
 			$trace_text = preg_replace('/^    \[(\d+)\]/m', "<b color='blue'>Step $1</b>", $trace_text);
 			$errortext .= '<br><pre>'.$trace_text.'</pre>';
-			
+			*/
+
 			$this->debug->msg($errortext);
 			if (self::EMAILERRORS) $this->mail_error($errortext);
 			if (self::OUTPUTERRORS) echo('<br /><br />' . $errortext . '<br /><br />');
@@ -435,5 +434,10 @@ class DB
 	}
 
 	// ---------------------------------------------------------------------------------------------
+	
+	private static function tick($f)
+	{
+		return '`'.$f.'`';
+	}
 
 }

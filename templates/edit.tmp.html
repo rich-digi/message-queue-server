@@ -1,0 +1,103 @@
+{% extends "base.tmp.html" %}
+
+{% block content %}
+
+<div>
+
+	<div class="column-group gutters">
+		<form action="" id="create_message" class="ink-form all-100 small-100 tiny-100">
+		<input type="hidden" name="MsgID" value="{{ message.MsgID }}">
+		<div class="control-group required column-group gutters">
+			<label for="email" class="all-20 align-right">To</label>
+			<div class="control all-80">
+				<input type="text" name="ToDMID" value="{{ message.ToDMID }}">
+			</div>
+		</div>
+		<div class="control-group required column-group gutters">
+			<label for="email" class="all-20 align-right">Subject</label>
+			<div class="control all-80">
+				<input type="text" name="Subject" value="{{ message.Subject }}">
+			</div>
+		</div>
+		<div class="control-group required column-group gutters">
+			<label for="email" class="all-20 align-right">From</label>
+			<div class="control all-80">
+				<input type="text" name="From" value="{{ message.From }}">
+			</div>
+		</div>
+		<div class="control-group column-group gutters">
+			<label for="email" class="all-20 align-right">ReplyTo</label>
+			<div class="control all-80">
+				<input type="text" name="ReplyTo" value="{{ message.ReplyTo }}">
+			</div>
+		</div>
+		<div class="control-group column-group gutters">
+			<label for="email" class="all-20 align-right">Priority</label>
+			<div class="control all-80">
+				<input type="text" name="Priority" value="{{ message.Priority }}">
+			</div>
+		</div>
+		<div class="control-group required column-group gutters">
+			<label for="area" class="all-20 align-right">Content</label>
+			<div  class="control all-80">
+				<textarea name="Content" rows="10">{{ message.Content }}</textarea>
+			</div>
+		</div>
+		 <div class="control-group column-group gutters">
+			<div class="all-20"></div>
+			<div class="control all-80">
+				<button type="submit" class="ink-button orange">Edit Message</button>
+			</div>
+		</div>
+		</form>
+	</div>
+
+</div>
+
+<script>
+
+Ink.requireModules(['Ink.Net.Ajax_1', 'Ink.Dom.Event_1', 'Ink.Dom.FormSerialize_1'], function(Ajax, InkEvent,  FormSerialize) {
+	var form = Ink.i('create_message');
+	InkEvent.observe(form, 'submit', function(event)
+	{
+		InkEvent.stopDefault(event);
+		var f = FormSerialize.serialize(form);
+		Ink.log(f); 
+		var uri = '/messages/'+f.MsgID;
+		delete f.MsgID;
+		Ink.log(uri, f); 
+		
+		new Ajax(uri, {
+			method: 'PUT',
+			postBody: JSON.stringify(f),
+			onSuccess: function(xhrObj, req) {
+				var r = xhrObj.responseJSON;
+				if (r.Updated)
+				{
+					alert('Message Updated');
+					document.location.href = '/admin/list';
+				}
+				else
+				{
+					alert('Update failed');
+				}
+			}, 
+			onFailure: function() {
+				Ink.log('Request failed');
+			},
+			on404: function() {
+				Ink.log('404 request');
+			}, 
+			onTimeout: function() {
+				Ink.log('Request timeout');
+			},
+			timeout: 5
+		});
+
+	});
+});
+
+</script>
+
+{% endblock content %}
+

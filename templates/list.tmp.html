@@ -1,0 +1,85 @@
+{% extends "base.tmp.html" %}
+
+{% block content %}
+
+<div>
+	<h2>List Messages</h2>
+	<table class="ink-table alternating">
+		<thead>
+				<tr>
+					<th class="align-left">To</th>
+					<th class="align-left">Subject</th>
+					<th class="align-left">Creeated</th>
+					<th class="align-left">Read</th>
+					<th class="align-left">Controls</th>
+				</tr>
+		</thead>
+		<tbody>
+			{% for message in messages %}
+				<tr>
+					<td>rich@apewave.com</td>
+					<td>{{ message.Subject|e }}</td>
+					<td>{{ message.CreatedGMT|date('F jS \\a\\t g:ia') }}</td>
+					<td>{{ message.ReadGMT|e }}</td>
+					<td class="controls">
+						<a href="{{ message.MsgID }}" class="edit"><i class="fa fa-2x fa-pencil-square-o"></i></a>
+						<a href="{{ message.MsgID }}" class="delete"><i class="fa fa-2x fa-trash-o"></i></a>
+					</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+</div>
+
+<script>
+Ink.requireModules(['Ink.Dom.Selector_1', 'Ink.Dom.Event_1', 'Ink.Net.Ajax_1'], function(InkSelector, InkEvent, Ajax) {
+    
+    var eds  = InkSelector.select('a.edit');
+    var dels = InkSelector.select('a.delete');
+
+    Ink.log(eds);
+    eds.forEach(function(e)
+    {
+		InkEvent.on(e, 'click', function(event) {
+			InkEvent.stopDefault(event);
+			var t = InkEvent.findElement(event, 'a');
+			var b = t.href.split('/');
+			var MsgID = b.pop();
+			document.location = '/admin/edit/'+MsgID;
+		}); 
+    });
+
+    dels.forEach(function(d)
+    {
+		InkEvent.on(d, 'click', function(event) {
+			InkEvent.stopDefault(event);
+			var t = InkEvent.findElement(event, 'a');
+			var b = t.href.split('/');
+			var MsgID = b.pop();
+			
+			var uri = '/messages/'+MsgID;
+			new Ajax(uri, {
+				method: 'DELETE',
+				postBody: '',
+				onSuccess: function(xhrObj, req) {
+					Ink.log(xhrObj.responseJSON);
+					document.location.reload();
+				}, 
+				onFailure: function() {
+					Ink.log('Request failed');
+				},
+				on404: function() {
+					Ink.log('404 request');
+				}, 
+				onTimeout: function() {
+					Ink.log('Request timeout');
+				},
+				timeout: 5
+			});
+		}); 
+    });
+});
+</script>
+
+{% endblock content %}
+

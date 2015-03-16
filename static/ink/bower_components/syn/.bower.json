@@ -1,0 +1,46 @@
+{
+  "name": "Syn",
+  "author": {
+    "name": "Bitovi",
+    "email": "contact@bitovi.com",
+    "web": "http://bitovi.com/"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:bitovi/syn.git",
+    "github": "https://github.com/bitovi/syn"
+  },
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://opensource.org/licenses/mit-license.php"
+    }
+  ],
+  "dependencies": {},
+  "devDependencies": {
+    "jquery": "1.10.2",
+    "jquerypp": "1.0.x",
+    "qunit": "1.10.x",
+    "canjs": "2.0.x",
+    "bootstrap": "3.0.x"
+  },
+  "ignore": [
+    "/build.js",
+    "stealconfig.js",
+    "/test",
+    "/steal",
+    "/drag",
+    "/demo",
+    "/*.js",
+    "/*.html"
+  ],
+  "homepage": "https://github.com/fabiosantoscode/syn",
+  "_release": "7bf76c7d1c",
+  "_resolution": {
+    "type": "commit",
+    "commit": "7bf76c7d1c872bca9da647add0e517896aae19d5"
+  },
+  "_source": "git://github.com/fabiosantoscode/syn.git",
+  "_target": "7bf76c7d1c872bca9da647add0e517896aae19d5",
+  "_originalSource": "fabiosantoscode/syn"
+}

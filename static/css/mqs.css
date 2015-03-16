@@ -1,0 +1,52 @@
+body
+{
+	background-color: #451700;
+}
+
+header
+{
+	padding: 2em 0;
+	margin-bottom: 2em;
+}
+
+header h1
+{
+    font-size: 2em;
+	color: orange;
+}
+
+header h1 small:before
+{
+	content: "|";
+	margin: 0 0.5em;
+	font-size: 1.8em;
+}
+
+footer
+{
+	background: #ccc;
+}
+
+h1, h2
+{
+	color:  #FFA500;
+}
+
+.ink-form .control-group.required label
+{
+	color: #AAA;
+}
+
+td.controls a
+{
+	display: block;
+	float: left;
+	margin-right: 0.5em;
+}
+
+td.controls a.fa-trash-o
+{
+	margin-top: 5px;
+	color: red;
+}	
+
