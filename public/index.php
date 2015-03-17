@@ -137,15 +137,13 @@ function identify()
 function create_message($dmid)
 {
 	$app = \Slim\Slim::getInstance();
-	
     $request = $app->request();
     $body = $request->getBody();
     $f = (array) json_decode($body);
+    $f['ToDMID'] = $dmid;
     $f['CreatedGMT'] = gmdate('Y-m-d H:i:s');
-
 	$db = $app->db;
 	$db->fields = array_filter($f);
-	$db->fields['ToDMID'] = $dmid;
 	$res = $db->save();
 	reply($res ? array('MsgID' => $res) : errobj('Could not create message'));
 }
@@ -155,14 +153,12 @@ function create_message($dmid)
 function update_message($msgid)
 {
 	$app = \Slim\Slim::getInstance();
-
     $request = $app->request();
     $body = $request->getBody();
     $f = (array) json_decode($body);
-
+    $f['MsgID'] = $msgid;
 	$db = $app->db;
 	$db->fields = array_filter($f);
-	$db->fields['MsgID'] = $msgid;
 	$res = $db->save();
 	reply($res ? array('Updated' => TRUE) : errobj('Could not update message'));
 }
@@ -196,7 +192,6 @@ function list_messages($dmid, $start = 0, $limit = 50)
 {
 	$app = \Slim\Slim::getInstance();
 	$db = $app->db;
-	
 	$all = $dmid == 'all@all.all';
 	$sql = 'SELECT '.($all ? 'ToDMID, ' : '').'MsgID, Subject, `From`, CreatedGMT
 			FROM '.MESSAGES_TABLE.' 
