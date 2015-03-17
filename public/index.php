@@ -16,14 +16,14 @@ define('MESSAGES_TABLE', 'Messages');
 
 require '../vendor/autoload.php';
 require_once '../classes/db.class.php';
+require_once '../classes/auth.class.php';
 
 $app = new \Slim\Slim();
 $app->config('debug', TRUE);
 $app->config('templates.path', '../templates');
 
-// Add authentication Middleware
-//require_once '../classes/auth.class.php';
-//$app->add(new Auth());
+// Add authentication middleware
+$app->add(new Auth\Auth());
 
 // Create database interface and store connection in container as singleton 
 $app->container->singleton('db', function ()
@@ -33,7 +33,7 @@ $app->container->singleton('db', function ()
     return $db;
 });
 
-// Create logger store in container as singleton 
+// Create logger and store in container as singleton 
 $app->container->singleton('log', function ()
 {
     $log = new \Monolog\Logger('MQS');
@@ -75,21 +75,21 @@ $app->delete('/messages/:msgid', 		 			'delete_message');
 
 // (2) MQS admin area routes...
 
-$app->get('/admin', 'authenticate', function () use ($app)
+$app->get('/admin', function () use ($app)
 {
 	// $app->log->info("MQS '/admin' route");
 	$app->render('index.tmp.html', array('name' => 'Rich'));
 });
 
-$app->get('/admin/create', 'authenticate', function () use ($app)
+$app->get('/admin/create', function () use ($app)
 {
 	$app->render('create.tmp.html', array('name' => 'Rich', 'v' => 'create'));
 });
 
-$app->get('/admin/list', function () use ($app)
+$app->get('/admin/list(/:dmid)', function ($dmid = 'all@all.all') use ($app)
 {
 	$ch = curl_init();
-	curl_setopt($ch, CURLOPT_URL, $_SERVER['HTTP_HOST'].'/messages/rich@apewave.com');
+	curl_setopt($ch, CURLOPT_URL, $_SERVER['HTTP_HOST'].'/messages/'.$dmid);
 	curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 	$res = curl_exec($ch);
 	curl_close($ch);
@@ -184,7 +184,7 @@ function list_messages($dmid, $start = 0, $limit = 50)
 	$app = \Slim\Slim::getInstance();
 	$db = $app->db;
 	$sql = 'SELECT MsgID, Subject, `From`, CreatedGMT FROM '.MESSAGES_TABLE.' 
-			WHERE ToDMID="'.$db->e($dmid).'" AND Deleted=0
+			WHERE '.($dmid != 'all@all.all' ? 'ToDMID="'.$db->e($dmid).'" AND ' : '').' Deleted=0
 			ORDER BY MsgID DESC
 			LIMIT '.$db->i($start).', '.$db->i($limit);
 	try
@@ -256,27 +256,6 @@ function delete_message($msgid)
 // -------------------------------------------------------------------------------------------------
 // Utility functions
 // -------------------------------------------------------------------------------------------------
-// -------------------------------------------------------------------------------------------------
-
-function authenticate(\Slim\Route $route)
-{
-    // Route middleware for simple API authentication
-	$app = \Slim\Slim::getInstance();
-	$uid = $app->request->headers->get('UID');
-	$key = $app->request->headers->get('KEY');
-    if (validateUserKey($uid, $key) === FALSE) $app->halt(401); // 401 Authorization Required
-}
-
-// -------------------------------------------------------------------------------------------------
-
-function validateUserKey($uid, $key)
-{
-	// We'll flesh out authetication later...
-	$res = $uid == '' && $key == '';
-	// return $res;
-	return TRUE;
-}
-
 // -------------------------------------------------------------------------------------------------
 
 function reply($reply)
