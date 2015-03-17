@@ -5,7 +5,7 @@
 //
 // MQS: Message Queue Server
 //
-// Uses: Slim, Twig and Monolog + Ink Interface Framework (on the front-end)
+// Uses: Slim, Twig and Monolog + Ink Interface Framework (for built in front-end test app at /admin)
 //
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
@@ -22,10 +22,18 @@ $app->config('debug', TRUE);
 $app->config('templates.path', '../templates');
 
 // Add authentication Middleware
-$app->add(new Auth());
+//require_once '../classes/auth.class.php';
+//$app->add(new Auth());
 
-// Create monolog logger and store logger in container as singleton 
-// Singleton resources retrieve the same log resource definition each time
+// Create database interface and store connection in container as singleton 
+$app->container->singleton('db', function ()
+{
+	$db = new DB(NULL, TRUE);
+	$db->set_table(MESSAGES_TABLE);
+    return $db;
+});
+
+// Create logger store in container as singleton 
 $app->container->singleton('log', function ()
 {
     $log = new \Monolog\Logger('MQS');
@@ -43,6 +51,9 @@ $app->view->parserOptions = array(
     'autoescape' 		=> TRUE
 );
 $app->view->parserExtensions = array(new \Slim\Views\TwigExtension());
+
+// Error handling
+class ResourceNotFoundException extends Exception {}
 
 
 // -------------------------------------------------------------------------------------------------
@@ -101,22 +112,16 @@ $app->get('/admin/edit/:msgid', function ($msgid) use ($app)
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
-// Initialise database connection and run the app
+// Run the app
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
-
-class ResourceNotFoundException extends Exception {}
-
-
-
-$db = new DB(NULL, TRUE);
 $app->run();
 
 
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
-// Implement Routes
+// Implement API Routes
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
 
@@ -130,16 +135,17 @@ function identify()
 
 function create_message($dmid)
 {
-	global $db;
 	$app = \Slim\Slim::getInstance();
 	
     $request = $app->request();
     $body = $request->getBody();
     $f = (array) json_decode($body);
     $f['CreatedGMT'] = gmdate('Y-m-d H:i:s');
+
+	$db = $app->db;
 	$db->fields = array_filter($f);
 	$db->fields['ToDMID'] = $dmid;
-	$res = $db->save(MESSAGES_TABLE);
+	$res = $db->save();
 	reply($res ? array('MsgID' => $res) : errobj('Could not create message'));
 }
 
@@ -147,15 +153,16 @@ function create_message($dmid)
 
 function update_message($msgid)
 {
-	global $db;
 	$app = \Slim\Slim::getInstance();
 
     $request = $app->request();
     $body = $request->getBody();
     $f = (array) json_decode($body);
+
+	$db = $app->db;
 	$db->fields = array_filter($f);
 	$db->fields['MsgID'] = $msgid;
-	$res = $db->save(MESSAGES_TABLE);
+	$res = $db->save();
 	reply($res ? array('Updated' => TRUE) : errobj('Could not update message'));
 }
 
@@ -163,7 +170,8 @@ function update_message($msgid)
 
 function count_messages($dmid)
 {
-	global $db;
+	$app = \Slim\Slim::getInstance();
+	$db = $app->db;
 	$sql = 'SELECT COUNT(MsgID) AS MessageCount FROM '.MESSAGES_TABLE.' WHERE ToDMID="'.$db->e($dmid).'" AND Deleted=0';
 	$res = $db->query_2_object($sql);
 	reply($res[0]);
@@ -173,12 +181,26 @@ function count_messages($dmid)
 
 function list_messages($dmid, $start = 0, $limit = 50)
 {
-	global $db;
+	$app = \Slim\Slim::getInstance();
+	$db = $app->db;
 	$sql = 'SELECT MsgID, Subject, `From`, CreatedGMT FROM '.MESSAGES_TABLE.' 
 			WHERE ToDMID="'.$db->e($dmid).'" AND Deleted=0
 			ORDER BY MsgID DESC
 			LIMIT '.$db->i($start).', '.$db->i($limit);
-	$res = $db->query_2_object($sql);
+	try
+	{
+		$res = $db->query_2_object($sql);
+		if (!count($res)) throw new ResourceNotFoundException();
+	}
+	catch (ResourceNotFoundException $e)
+	{
+		$app->response()->status(404); // Return 404  Not Found
+	}
+	catch (Exception $e)
+	{
+		$app->response()->status(400);
+		$app->response()->header('X-Status-Reason', $e->getMessage());
+	}
 	reply(count($res) ? $res : errobj('DMID '.$dmid.', start '.$start.', limit '.$limit.', - no matching messages'));
 }
 
@@ -186,23 +208,16 @@ function list_messages($dmid, $start = 0, $limit = 50)
 
 function get_message($msgid)
 {
-	global $db;
+	$app = \Slim\Slim::getInstance();
+	$db = $app->db;
 	try
 	{
-		$res = $db->load($msgid, MESSAGES_TABLE);
-		if ($res)
-		{
-			
-		}
-		else
-		{
-		
-		}
+		$res = $db->load($msgid);
+		if (!$res) throw new ResourceNotFoundException();
 	}
 	catch (ResourceNotFoundException $e)
 	{
-		// Return 404  Not Found
-		$app->response()->status(404);
+		$app->response()->status(404); // Return 404  Not Found
 	}
 	catch (Exception $e)
 	{
@@ -217,9 +232,23 @@ function get_message($msgid)
 
 function delete_message($msgid)
 {
-	global $db;
+	$app = \Slim\Slim::getInstance();
+	$db = $app->db;
 	$db->fields = array('MsgID' => $msgid, 'Deleted' => 1);
-	$res = $db->save(MESSAGES_TABLE);
+	try
+	{
+		$res = $res = $db->save();
+		if (!$res) throw new ResourceNotFoundException();
+	}
+	catch (ResourceNotFoundException $e)
+	{
+		$app->response()->status(404); // Return 404  Not Found
+	}
+	catch (Exception $e)
+	{
+		$app->response()->status(400);
+		$app->response()->header('X-Status-Reason', $e->getMessage());
+	}
 	reply($res ? array('Deleted' => TRUE) : errobj('Message with MsgID '.$msgid.' does not exist'));
 }
 
@@ -254,8 +283,7 @@ function reply($reply)
 {
 	$app = \Slim\Slim::getInstance();
 	$app->response()->header('Content-Type', 'application/json');
-	echo json_encode($reply, JSON_PRETTY_PRINT);
-	exit;
+	echo(json_encode($reply, JSON_PRETTY_PRINT));
 }
 
 // -------------------------------------------------------------------------------------------------

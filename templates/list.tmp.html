@@ -35,9 +35,6 @@
 Ink.requireModules(['Ink.Dom.Selector_1', 'Ink.Dom.Event_1', 'Ink.Net.Ajax_1'], function(InkSelector, InkEvent, Ajax) {
     
     var eds  = InkSelector.select('a.edit');
-    var dels = InkSelector.select('a.delete');
-
-    Ink.log(eds);
     eds.forEach(function(e)
     {
 		InkEvent.on(e, 'click', function(event) {
@@ -49,6 +46,7 @@ Ink.requireModules(['Ink.Dom.Selector_1', 'Ink.Dom.Event_1', 'Ink.Net.Ajax_1'], 
 		}); 
     });
 
+    var dels = InkSelector.select('a.delete');
     dels.forEach(function(d)
     {
 		InkEvent.on(d, 'click', function(event) {
