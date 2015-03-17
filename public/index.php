@@ -78,7 +78,7 @@ $app->delete('/messages/:msgid', 		 			'delete_message');
 $app->get('/admin', function () use ($app)
 {
 	// $app->log->info("MQS '/admin' route");
-	$app->render('index.tmp.html', array('name' => 'Rich'));
+	$app->render('dashboard.tmp.html', array('name' => 'Rich', 'v' => 'dashboard'));
 });
 
 $app->get('/admin/create', function () use ($app)
@@ -94,7 +94,7 @@ $app->get('/admin/list(/:dmid)', function ($dmid = 'all@all.all') use ($app)
 	$res = curl_exec($ch);
 	curl_close($ch);
 	$res = json_decode($res);
-	$app->render('list.tmp.html', array('name' => 'Rich', 'v' => 'list', 'messages' => $res));
+	$app->render('list.tmp.html', array('name' => 'Rich', 'v' => 'list', 'default_ToDMID' => $dmid, 'messages' => $res));
 });
 
 $app->get('/admin/edit/:msgid', function ($msgid) use ($app)
@@ -168,6 +168,18 @@ function update_message($msgid)
 
 // -------------------------------------------------------------------------------------------------
 
+function mark_read($msgid)
+{
+	$app = \Slim\Slim::getInstance();
+	$db = $app->db;
+	$db->fields['MsgID'] = $msgid;
+	$db->fields['ReadGMT'] = gmdate('Y-m-d H:i:s');
+	$res = $db->save();
+	reply($res ? array('MarkedRead' => $db->fields['ReadGMT']) : errobj('Could not mark message as read'));
+}
+
+// -------------------------------------------------------------------------------------------------
+
 function count_messages($dmid)
 {
 	$app = \Slim\Slim::getInstance();
@@ -183,8 +195,11 @@ function list_messages($dmid, $start = 0, $limit = 50)
 {
 	$app = \Slim\Slim::getInstance();
 	$db = $app->db;
-	$sql = 'SELECT MsgID, Subject, `From`, CreatedGMT FROM '.MESSAGES_TABLE.' 
-			WHERE '.($dmid != 'all@all.all' ? 'ToDMID="'.$db->e($dmid).'" AND ' : '').' Deleted=0
+	
+	$all = $dmid == 'all@all.all';
+	$sql = 'SELECT '.($all ? 'ToDMID, ' : '').'MsgID, Subject, `From`, CreatedGMT
+			FROM '.MESSAGES_TABLE.' 
+			WHERE '.($all ? '' : 'ToDMID="'.$db->e($dmid).'" AND ').' Deleted=0
 			ORDER BY MsgID DESC
 			LIMIT '.$db->i($start).', '.$db->i($limit);
 	try

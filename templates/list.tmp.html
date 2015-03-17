@@ -17,7 +17,7 @@
 		<tbody>
 			{% for message in messages %}
 				<tr>
-					<td>rich@apewave.com</td>
+					<td>{{ message.ToDMID|e|default(default_ToDMID) }}</td>
 					<td>{{ message.Subject|e }}</td>
 					<td>{{ message.CreatedGMT|date('F jS \\a\\t g:ia') }}</td>
 					<td>{{ message.ReadGMT|e }}</td>
@@ -34,7 +34,7 @@
 <script>
 Ink.requireModules(['Ink.Dom.Selector_1', 'Ink.Dom.Event_1', 'Ink.Net.Ajax_1'], function(InkSelector, InkEvent, Ajax) {
     
-    var eds  = InkSelector.select('a.edit');
+    var eds = InkSelector.select('a.edit');
     eds.forEach(function(e)
     {
 		InkEvent.on(e, 'click', function(event) {

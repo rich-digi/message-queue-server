@@ -4,7 +4,7 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-        <title>Message Queue Server Admin</title>
+        <title>Message Queue Server</title>
         <meta name="description" content="">
         <meta name="author" content="ink, cookbook, recipes">
         <meta name="HandheldFriendly" content="True">
@@ -53,17 +53,16 @@
         <div class="ink-grid">
 
             <header>
-                <h1>MQS<small>Hello {{ name }}, this is the Message Queue Server's admin area</small></h1>
-                <nav class="ink-navigation">
-                    <ul class="menu horizontal orange">
-                        <li{% if v == 'dashboard' 	%} class="active"{% endif %}><a href="/admin">Dashboard</a></li>
-                        <li{% if v == 'create' 		%} class="active"{% endif %}><a href="/admin/create">Create Message</a></li>
-                        <li{% if v == 'list' 		%} class="active"{% endif %}><a href="/admin/list">List Messages</a></li>
-                    </ul>
-                </nav>
+                <h1>MQS<small> the Message Queue Server</small></h1>
+                <hr class="orange">
             </header>
             
-			{% block content %}{% endblock %}
+            
+			<h2>401 Access Denied</h2>
+			
+			<p>
+			You need to be authenticated to access this resource.
+			</p>
 			
 		</div>
 
