@@ -21,7 +21,7 @@ class Auth extends \Slim\Middleware
 		$this->rob->method 	= $this->app->request->getMethod();
 		$this->rob->ip 		= $this->app->request->getIp();
     
-    	$access = $this->check_route_access();
+    	$access = $this->check_route_access($this->rob);
 		if ($access) {
 			$this->next->call();
 		} else {
@@ -29,11 +29,11 @@ class Auth extends \Slim\Middleware
 		}
     }
     
-    private function check_route_access()
+    private function check_route_access($rob)
     {
-    	$uri 	= $this->rob->uri;
-    	$method = $this->rob->method;
-    	$ip 	= $this->rob->ip;
+    	$uri 	= $rob->uri;
+    	$method = $rob->method;
+    	$ip 	= $rob->ip;
     	
     	if (preg_match('~^/$~', $uri)) return TRUE;
     	if (preg_match('~^/admin/.*$~', $uri) && in_array($ip, $this->can_admin)) return TRUE;
