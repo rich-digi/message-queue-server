@@ -4,30 +4,62 @@ namespace Auth;
  
 class Auth extends \Slim\Middleware
 {
-    private $ips_read  = array('127.0.0.1');
-    private $ips_write = array('127.0.0.1');
-    private $ips_admin = array('127.0.0.1');
+    private $can_read  = array('127.0.0.1');
+    private $can_write = array('127.0.0.1');
+    private $can_admin = array('127.0.0.1');
+    
+    private $rob; // Request object
     
     public function __construct()
     {
+    	$this->rob = new \stdClass;
     }
  
     public function call()
     {
-		$uri = $this->app->request()->getResourceUri();
-		$rip = $this->app->request->getIp();
+		$this->rob->uri 	= $this->app->request()->getResourceUri();
+		$this->rob->method 	= $this->app->request->getMethod();
+		$this->rob->ip 		= $this->app->request->getIp();
     
-    	// if (preg_match($uri, '/messages/') && in_array($rip, $ips_read))
-		// $this->next->call();
-		
-		$this->access_denied();
-		
+    	$access = $this->check_route_access();
+		if ($access) {
+			$this->next->call();
+		} else {
+			$this->access_denied($this->rob->ip);
+		}
     }
     
-    private function access_denied()
+    private function check_route_access()
     {
-		$error_data = array('error' => 'Access Denied');
-		$this->app->render('access-denied.tmp.html', $error_data, 401);  // Return 401 Access Denied
+    	$uri 	= $this->rob->uri;
+    	$method = $this->rob->method;
+    	$ip 	= $this->rob->ip;
+    	
+    	if (preg_match('~^/$~', $uri)) return TRUE;
+    	if (preg_match('~^/admin/.*$~', $uri) && in_array($ip, $this->can_admin)) return TRUE;
+    	if (preg_match('~^/messages(/.*)$~', $uri, $matches))
+    	{
+			if (in_array($ip, $this->can_write)) return TRUE;
+			$tail = $matches[1];
+			switch($method)
+			{
+				case 'GET':
+					if (in_array($ip, $this->can_read)) return TRUE;
+					break;
+				case 'PUT':
+					if (preg_match('~^/\d+/markread$~', $uri) && in_array($ip, $this->can_read)) return TRUE;
+					break;
+				case 'DELETE':
+					if (in_array($ip, $this->can_read)) return TRUE;
+					break;
+			}
+		}
+    	return FALSE;
+    }
+    
+    private function access_denied($ip)
+    {
+		$this->app->render('access-denied.tmp.html', array('ip' => $ip), 401);  // Return 401 Access Denied
 		exit;
     }
 }

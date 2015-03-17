@@ -65,11 +65,12 @@ class ResourceNotFoundException extends Exception {}
 // (1) MQS API routes...
 
 $app->get 	('/', 									'identify');
-$app->post 	('/messages/:dmid', 	 				'create_message');
-$app->put	('/messages/:msgid', 		 			'update_message');
 $app->get 	('/messages/:dmid/count', 				'count_messages');
 $app->get 	('/messages/:dmid(/:start)(/:limit)', 	'list_messages')->conditions(array('dmid' => EMAIL_REGEX));
 $app->get 	('/messages/:msgid', 		 			'get_message')->conditions(array('msgid' => '\d+'));
+$app->post 	('/messages/:dmid', 	 				'create_message');
+$app->put	('/messages/:msgid', 		 			'update_message');
+$app->put	('/messages/:msgid/markread', 		 	'mark_message_read');
 $app->delete('/messages/:msgid', 		 			'delete_message');
 
 
@@ -168,7 +169,7 @@ function update_message($msgid)
 
 // -------------------------------------------------------------------------------------------------
 
-function mark_read($msgid)
+function mark_message_read($msgid)
 {
 	$app = \Slim\Slim::getInstance();
 	$db = $app->db;
