@@ -5,7 +5,7 @@
 //
 // MQS: Message Queue Server
 //
-// Uses: Slim, Twig and Monolog + Ink Interface Framework (for built in front-end test app at /admin)
+// Uses: Slim, Twig and Monolog + Ink Interface Framework (for built in front-end app at /admin)
 //
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
@@ -64,11 +64,13 @@ class ResourceNotFoundException extends Exception {}
 
 // (1) MQS API routes...
 
+// @/
+// Identify
 $app->get 	('/', 									'identify');
-$app->get 	('/messages/:dmid/count', 				'count_messages');
+$app->get 	('/messages/:dmid/count', 				'count_messages')->conditions(array('dmid' => EMAIL_REGEX));
 $app->get 	('/messages/:dmid(/:start)(/:limit)', 	'list_messages')->conditions(array('dmid' => EMAIL_REGEX));
 $app->get 	('/messages/:msgid', 		 			'get_message')->conditions(array('msgid' => '\d+'));
-$app->post 	('/messages/:dmid', 	 				'create_message');
+$app->post 	('/messages/:dmid', 	 				'create_message')->conditions(array('dmid' => EMAIL_REGEX));
 $app->put	('/messages/:msgid', 		 			'update_message');
 $app->put	('/messages/:msgid/markread', 		 	'mark_message_read');
 $app->delete('/messages/:msgid', 		 			'delete_message');
@@ -137,14 +139,16 @@ function identify()
 function create_message($dmid)
 {
 	$app = \Slim\Slim::getInstance();
-    $request = $app->request();
-    $body = $request->getBody();
+    $req = $app->request();
+    $body = $req->getBody();
     $f = (array) json_decode($body);
     $f['ToDMID'] = $dmid;
     $f['CreatedGMT'] = gmdate('Y-m-d H:i:s');
 	$db = $app->db;
 	$db->fields = array_filter($f);
 	$res = $db->save();
+	$app->response->setStatus(201); // 201 Created
+	$app->response->headers->set('Location', $req->getUrl().'/messages/'.$res); // The location of the newly created message
 	reply($res ? array('MsgID' => $res) : errobj('Could not create message'));
 }
 
@@ -205,12 +209,12 @@ function list_messages($dmid, $start = 0, $limit = 50)
 	}
 	catch (ResourceNotFoundException $e)
 	{
-		$app->response()->status(404); // Return 404  Not Found
+		$app->response()->setStatus(404); // Return 404  Not Found
 	}
 	catch (Exception $e)
 	{
-		$app->response()->status(400);
-		$app->response()->header('X-Status-Reason', $e->getMessage());
+		$app->response()->setStatus(400);
+		$app->response()->headers->set('X-Status-Reason', $e->getMessage());
 	}
 	reply(count($res) ? $res : errobj('DMID '.$dmid.', start '.$start.', limit '.$limit.', - no matching messages'));
 }
@@ -228,12 +232,12 @@ function get_message($msgid)
 	}
 	catch (ResourceNotFoundException $e)
 	{
-		$app->response()->status(404); // Return 404  Not Found
+		$app->response()->setStatus(404); // Return 404  Not Found
 	}
 	catch (Exception $e)
 	{
-		$app->response()->status(400);
-		$app->response()->header('X-Status-Reason', $e->getMessage());
+		$app->response()->setStatus(400);
+		$app->response()->headers->set('X-Status-Reason', $e->getMessage());
 	}
 
 	reply($res ? $res : errobj('Message with MsgID '.$msgid.' does not exist'));
@@ -253,13 +257,14 @@ function delete_message($msgid)
 	}
 	catch (ResourceNotFoundException $e)
 	{
-		$app->response()->status(404); // Return 404  Not Found
+		$app->response()->setStatus(404); // Return 404  Not Found
 	}
 	catch (Exception $e)
 	{
-		$app->response()->status(400);
-		$app->response()->header('X-Status-Reason', $e->getMessage());
+		$app->response()->setStatus(400);
+		$app->response()->headers->set('X-Status-Reason', $e->getMessage());
 	}
+	$app->response->setStatus(204); // 204 Deleted
 	reply($res ? array('Deleted' => TRUE) : errobj('Message with MsgID '.$msgid.' does not exist'));
 }
 
@@ -272,7 +277,7 @@ function delete_message($msgid)
 function reply($reply)
 {
 	$app = \Slim\Slim::getInstance();
-	$app->response()->header('Content-Type', 'application/json');
+	$app->response()->headers->set('Content-Type', 'application/json');
 	echo(json_encode($reply, JSON_PRETTY_PRINT));
 }
 
