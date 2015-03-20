@@ -68,10 +68,10 @@ class Auth extends \Slim\Middleware
     	
     	extract($this->acl); // Should set $can_read, $can_write and $can_admin
     	if (preg_match('~^/$~', $uri)) return TRUE;
-    	if (preg_match(self::ADMIN_REGEX, $uri) && in_array($ip, $can_admin)) return FALSE;
+    	if (preg_match(self::ADMIN_REGEX, $uri) && in_array($ip, $can_admin)) return TRUE;
     	if (preg_match(self::API_REGEX, $uri, $matches))
     	{
-			if (in_array($ip, $can_write)) return FALSE;
+			if (in_array($ip, $can_write)) return TRUE;
 			$tail = $matches[1];
 			switch($method)
 			{

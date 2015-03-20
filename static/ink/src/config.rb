@@ -2,7 +2,7 @@
 require 'compass'
 
 # Set this to the root of your project when deployed:
-http_path = "/"
+http_path = "/static/ink/src/"
 css_dir = "css"
 sass_dir = "sass"
 images_dir = "images"
