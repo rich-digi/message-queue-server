@@ -20,8 +20,8 @@ class Auth extends \Slim\Middleware
 		catch (\Exception $e)
 		{
 			$this->app->response->setStatus(500); // Server error
-			echo($e->getMessage());
-			exit;
+			$this->app->response->setBody($e->getMessage());
+			return;
 		}
 		try
 		{
@@ -35,8 +35,8 @@ class Auth extends \Slim\Middleware
 		catch (InvalidConfigException $e)
 		{
 			$this->app->response->setStatus(500); // Server error
-			echo($e->getMessage());
-			exit;
+			$this->app->response->setBody($e->getMessage());
+			return;
 		}
 		$this->rob = new \stdClass;
     }
@@ -47,8 +47,14 @@ class Auth extends \Slim\Middleware
 		$this->rob->method 	= $this->app->request->getMethod();
 		$this->rob->ip 		= $this->app->request->getIp();
     
-		if (!$this->check_route_access($this->rob)) $this->access_denied($this->rob);
-		$this->next->call();
+		if (!$this->check_route_access($this->rob))
+		{
+			$this->access_denied($this->rob);
+		}
+		else
+		{
+			$this->next->call();
+		}
     }
     
     private function check_route_access($rob)
@@ -59,7 +65,7 @@ class Auth extends \Slim\Middleware
     	
     	extract($this->acl); // Should set $can_read, $can_write and $can_admin
     	if (preg_match('~^/$~', $uri)) return TRUE;
-    	if (preg_match('~^/admin(/.*)?$~', $uri) && in_array($ip, $can_admin)) return TRUE;
+    	if (preg_match('~^/admin(/.*)?$~', $uri) && in_array($ip, $can_admin)) return FALSE;
     	if (preg_match('~^/messages(/.*)$~', $uri, $matches))
     	{
 			if (in_array($ip, $can_write)) return TRUE;
@@ -83,7 +89,7 @@ class Auth extends \Slim\Middleware
     private function access_denied($rob)
     {
 		$this->app->response->setStatus(401); // Return 401 Access Denied
-		$this->app->render('access-denied.tmp.html', array('ip' => $rob->ip));
-		exit;
+		$this->app->response->setBody('access-denied.tmp.html', array('ip' => $rob->ip));
+		return;
     }
 }
