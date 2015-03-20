@@ -1,4 +1,5 @@
 .DS_Store
-node_nodules
+.sass-cache
+node_modules
 bower_components
 templates/cache

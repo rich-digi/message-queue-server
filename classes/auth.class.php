@@ -88,8 +88,9 @@ class Auth extends \Slim\Middleware
     
     private function access_denied($rob)
     {
-		$this->app->response->setStatus(401); // Return 401 Access Denied
-		$this->app->response->setBody('access-denied.tmp.html', array('ip' => $rob->ip));
+		$app = $this->app;
+		$app->response->setStatus(401); // Return 401 Access Denied
+		$app->response->setBody($app->view->fetch('access-denied.tmp.html', array('ip' => $rob->ip)));
 		return;
     }
 }
