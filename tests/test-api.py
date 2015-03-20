@@ -19,7 +19,7 @@ def make_api_call(method, uri, payload):
 	#
 	# Make a Call to the REST API at uri, using HTTP method, with payload
 	#
-			
+	res	= {'status': '200', 'payload': 'STUFF'}
 	return res
 	
 
@@ -31,11 +31,12 @@ def process_data(input_pattern, column_positions, output_prefix, joiner_function
 	cp = column_positions	
 	total = 0
 	for file in glob.glob(input_pattern):
-		fileno = re.match(r'.*(\d+).txt', file)
-		output = open(output_prefix + fileno.group(1) + '.tsv', 'wb')
-		writer = csv.writer(output, delimiter='\t', quotechar='"', quoting=csv.QUOTE_ALL)
+		print file
+		fileno = re.match(r'.*(\d+).csv', file)
+		output = open(output_prefix + fileno.group(1) + '.csv', 'wb')
+		writer = csv.writer(output, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
 		tsv = open(file, 'rU')
-		reader = csv.reader(tsv, delimiter='\t')
+		reader = csv.reader(tsv, delimiter=',')
 		rownum = 0
 		for row in reader:
 			extract_cols = range(len(row))
@@ -45,15 +46,14 @@ def process_data(input_pattern, column_positions, output_prefix, joiner_function
 				writer.writerow(joiner_function(content))
 			else:
 				# Extract data from row
-				title 		= content[cp['title']]
-				firstname 	= content[cp['firstname']]
-				lastname 	= content[cp['lastname']]
-				company 	= content[cp['company']]
+				uri 		= content[cp['uri']]
+				method	 	= content[cp['method']]
+				payload 	= content[cp['payload']]
 
-				cgn = make_greeting(title, firstname, lastname, company)
+				res = make_api_call(method, uri, payload)
 						
-				print '{:20s}      {:40s}      {:40s}      {:40s}      {:40s}'.format(title, firstname, lastname, company, cgn)
-				content[cp['result']] = cgn
+				print '{:20s} {:40s} {:40s}'.format(uri, method, res['status'])
+				content[cp['result_status']] = res['status']
 				writer.writerow(joiner_function(content))
 				total  += 1
 			rownum += 1
@@ -89,9 +89,9 @@ def check_test_results(column_positions, output_prefix):
 			else:
 				# Extract data from row
 				content = list(row[i] for i in extract_cols)
-				expected = content[cp['expected']]
-				greeting = content[cp['result']]
-				passed = greeting == expected
+				exp_status = content[cp['expected_status']]
+				got_status = content[cp['result_status']]
+				passed = exp_status == got_status
 				if not passed:
 					 stdout.write(trml.BOLD)
 				print '{:4d}      {:20s}      {:20s}      {:20s}'.format(rownum + 1, expected, greeting, passmsg if passed else failmsg), trml.BLACK
@@ -120,15 +120,14 @@ if __name__ == '__main__':
 	print 'TESTING REST API'
 	print '----------------'
 	print
-	in_pat  = 'tests/api_input*.txt'
-	col_pos = {'title': 0, 'firstname': 1, 'lastname': 2, 'company': 3, 'expected': 4, 'result': 5}
-	out_pre = 'tests/api_output'
+	in_pat  = 'data/api_input*.csv'
+	col_pos = {'method': 0, 'uri': 1, 'payload': 2, 'expected_status': 3, 'expexted_payload': 4, 'result_status': 5, 'result_payload': 6, 'time_taken': 7}
+	out_pre = 'data/api_output'
 	def joinfun(d) : return d 
 	total = process_data(in_pat, col_pos, out_pre, joinfun)
 	print
 	print total, 'lines processed'
 	print 'DONE'
 	print
-	if testmode:
-		# Check the results of the test
-		check_test_results(col_pos, out_pre)
+	# Check the results of the test
+	check_test_results(col_pos, out_pre)

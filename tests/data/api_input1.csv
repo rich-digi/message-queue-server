@@ -1,0 +1,2 @@
+"method","uri","payload","expected_status","expected_payload","result_status","result_payload"
+"GET","/","","200","{\"whoami\": \"I am MQS, the Message Queue Server at mqs.loc\"}"
