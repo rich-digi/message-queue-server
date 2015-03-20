@@ -10,7 +10,15 @@ class Auth extends \Slim\Middleware
     private $acl; // Access Control List
     private $rob; // Request Object
     
+    const API_REGEX 	= '~^/messages(/.*)$~';
+    const ADMIN_REGEX 	= '~^/admin(/.*)?$~';
+    
     public function __construct()
+    {
+		$this->rob = new \stdClass;
+    }
+ 
+    public function call()
     {
     	try
     	{
@@ -38,15 +46,10 @@ class Auth extends \Slim\Middleware
 			$this->app->response->setBody($e->getMessage());
 			return;
 		}
-		$this->rob = new \stdClass;
-    }
- 
-    public function call()
-    {
+
 		$this->rob->uri 	= $this->app->request()->getResourceUri();
 		$this->rob->method 	= $this->app->request->getMethod();
 		$this->rob->ip 		= $this->app->request->getIp();
-    
 		if (!$this->check_route_access($this->rob))
 		{
 			$this->access_denied($this->rob);
@@ -65,10 +68,10 @@ class Auth extends \Slim\Middleware
     	
     	extract($this->acl); // Should set $can_read, $can_write and $can_admin
     	if (preg_match('~^/$~', $uri)) return TRUE;
-    	if (preg_match('~^/admin(/.*)?$~', $uri) && in_array($ip, $can_admin)) return FALSE;
-    	if (preg_match('~^/messages(/.*)$~', $uri, $matches))
+    	if (preg_match(self::ADMIN_REGEX, $uri) && in_array($ip, $can_admin)) return FALSE;
+    	if (preg_match(self::API_REGEX, $uri, $matches))
     	{
-			if (in_array($ip, $can_write)) return TRUE;
+			if (in_array($ip, $can_write)) return FALSE;
 			$tail = $matches[1];
 			switch($method)
 			{
@@ -90,7 +93,19 @@ class Auth extends \Slim\Middleware
     {
 		$app = $this->app;
 		$app->response->setStatus(401); // Return 401 Access Denied
-		$app->response->setBody($app->view->fetch('access-denied.tmp.html', array('ip' => $rob->ip)));
+		if (!preg_match(self::ADMIN_REGEX, $rob->uri))
+		{
+			$app->response->headers->set('Content-Type', 'application/json');
+			$app->response->setBody(json_encode(array(
+							'Message' => '401 Access Denied',
+							'Details' => 'Your IP ('.$rob->ip.') can\'t access this resource'
+			), JSON_PRETTY_PRINT));
+		}
+		else
+		{
+			$app->response->headers->set('Content-Type', 'text/html');
+			$app->response->setBody($app->view->fetch('access-denied.tmp.html', array('ip' => $rob->ip)));
+		}
 		return;
     }
 }
