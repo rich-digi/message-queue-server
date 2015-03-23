@@ -1,2 +1,10 @@
-"method","uri","payload","expected_status","expected_payload","result_status","result_payload"
-"GET","/","","200","{\whoami\"": \""I am MQS","200"
+"method","uri","payload","expected_status","expected_payload","result_status","result_payload","time_taken"
+"GET","/","","200","{""whoami"":""I am MQS, the Message Queue Server at mqs.loc""}","200","{
+    ""whoami"": ""I am MQS, the Message Queue Server at mqs.loc""
+}","39"
+"POST","/messages/rich@apewave.com","{""Subject"":""Opulent palaces for under a tenner!"",""Content"":""Ever wanted to escape your squalid excuse for a home. Click here!\n\nPALACES FOR UNDER A TENNER!""}","201","{""MsgID"":\d+}","201","{
+    ""MsgID"": 74
+}","46"
+"GET","/messages/rich@apewave.com/count","","200","{""MessageCount"":\d+}","200","{
+    ""MessageCount"": 53
+}","43"

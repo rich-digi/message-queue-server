@@ -3,7 +3,11 @@
 # --------------------------------------------------------------------------------
 
 import glob, csv, string, re
+import requests
+import simplejson as json
 from sys import argv, stdout
+
+API_URL = 'mqs.loc'
 
 class trml:
 	BLACK 	= '\033[30m'
@@ -19,9 +23,57 @@ def make_api_call(method, uri, payload):
 	#
 	# Make a Call to the REST API at uri, using HTTP method, with payload
 	#
-	res	= {'status': '200', 'payload': 'STUFF'}
-	return res
+	method = method.upper()
+	url = 'http://' + API_URL + uri
+	res	= {'status': 0, 'headers': '', 'payload': '', 'time': 0}
 	
+	try:
+	
+		if method == 'GET':
+			r = requests.get(url, params=payload)
+		elif method == 'POST':
+			r = requests.post(url, data=payload)
+		elif method == 'PUT':
+			r = requests.put(url, data=payload)
+		elif method == 'DELETE':
+			r = requests.delete(url)
+		
+		time_ms = int(round(r.elapsed.microseconds / float(1000), 0)); # Time in milliseconds
+		res	= {
+			'status': 				r.status_code,
+			'headers':				r.headers,
+			'payload': 				r.text,
+			'time':					time_ms
+			}
+	
+	except requests.ConnectionError:
+		print trml.RED + 'CONNECTION FAILED' + trml.BLACK
+	except requests.HTTPError:
+		print trml.RED + 'INVALID HTTP RESPONSE' + trml.BLACK
+	except requests.Timeout:
+		print trml.RED + 'REQUEST TIMEOUT' + trml.BLACK
+	except requests.exceptions.RequestException:
+		print trml.RED + 'REQUEST EXCEPTION OF UNKNOWN TYPE' + trml.BLACK
+
+	return res
+
+
+# --------------------------------------------------------------------------------
+# Normalize JSON values
+
+def normalize_json(str):
+	str = json.dumps(json.loads(str), separators=(',', ':'), sort_keys=True)
+	return str
+
+
+# --------------------------------------------------------------------------------
+# Test whether two strings decode to equivalent JSON values
+
+def test_json_equivalence(a, b):
+	a = normalize_json(a)
+	b = normalize_json(b)
+	return a == b
+
 
 # --------------------------------------------------------------------------------
 # process_data function
@@ -32,11 +84,12 @@ def process_data(input_pattern, column_positions, output_prefix, joiner_function
 	total = 0
 	for file in glob.glob(input_pattern):
 		print file
+		print
 		fileno = re.match(r'.*(\d+).csv', file)
 		output = open(output_prefix + fileno.group(1) + '.csv', 'wb')
 		writer = csv.writer(output, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
-		tsv = open(file, 'rU')
-		reader = csv.reader(tsv, delimiter=',')
+		inpcsv = open(file, 'rU')
+		reader = csv.reader(inpcsv, delimiter=',')
 		rownum = 0
 		for row in reader:
 			extract_cols = range(len(row))
@@ -46,18 +99,24 @@ def process_data(input_pattern, column_positions, output_prefix, joiner_function
 				writer.writerow(joiner_function(content))
 			else:
 				# Extract data from row
-				uri 		= content[cp['uri']]
-				method	 	= content[cp['method']]
-				payload 	= content[cp['payload']]
+				uri 	= content[cp['uri']]
+				method	= content[cp['method']]
+				payload = content[cp['payload']]
 
+				# Make API call
 				res = make_api_call(method, uri, payload)
-						
-				print '{:20s} {:40s} {:40s}'.format(uri, method, res['status'])
-				content[cp['result_status']] = res['status']
-				writer.writerow(joiner_function(content))
+				print '{:7s} {:40s} {:5d}    {:10d}ms'.format(method, uri, res['status'], res['time'])
+				
+				# Record the result
+				resline = content
+				resline[cp['expected_payload']] = resline[cp['expected_payload']].strip()
+				resline.append(res['status'])
+				resline.append(res['payload'].strip())
+				resline.append(res['time'])
+				writer.writerow(joiner_function(resline))
 				total  += 1
 			rownum += 1
-		tsv.close()
+		inpcsv.close()
 		output.close()
 	return total
 
@@ -67,18 +126,18 @@ def process_data(input_pattern, column_positions, output_prefix, joiner_function
 def check_test_results(column_positions, output_prefix):
 	stdout.write(trml.BOLD)
 	print
-	print '--------------------------------------------------------------------'
-	print '{:4s}      {:20s}      {:20s}      {:20s}'.format('Line', 'Expected', 'Got', 'Test')
-	print '--------------------------------------------------------------------'
+	print '-------------------------------------------------------------------------------------------------'
+	print '{:4s}      {:10s}      {:5s}      {:10s}    {:5s}'.format('Line', 'Expected', 'Got', 'Test', 'Time')
+	print '-------------------------------------------------------------------------------------------------'
 	stdout.write(trml.NORMAL)
 	cp = column_positions	
-	passmsg = trml.GREEN + 'PASSED'
-	failmsg = trml.RED   + 'FAILED'
+	passmsg = trml.GREEN + 'PASSED' + trml.BLACK
+	failmsg = trml.RED   + 'FAILED' + trml.BLACK
 	pcount = 0
 	fcount = 0
-	for file in glob.glob(output_prefix + '*.tsv'):
+	for file in glob.glob(output_prefix + '*.csv'):
 		tsv = open(file, 'rU')
-		reader = csv.reader(tsv, delimiter='\t')
+		reader = csv.reader(tsv, delimiter=',')
 		rownum = 0
 		for row in reader:
 			extract_cols = range(len(row))
@@ -89,12 +148,16 @@ def check_test_results(column_positions, output_prefix):
 			else:
 				# Extract data from row
 				content = list(row[i] for i in extract_cols)
-				exp_status = content[cp['expected_status']]
-				got_status = content[cp['result_status']]
-				passed = exp_status == got_status
+				exp_status  = content[cp['expected_status']]
+				res_status  = content[cp['result_status']]
+				exp_payload = content[cp['expected_payload']]
+				res_payload = content[cp['result_payload']]
+				time_taken  = content[cp['time_taken']]
+				
+				passed = exp_status == res_status and payload_meets_test_criteria(exp_payload, res_payload)
 				if not passed:
 					 stdout.write(trml.BOLD)
-				print '{:4d}      {:20s}      {:20s}      {:20s}'.format(rownum + 1, expected, greeting, passmsg if passed else failmsg), trml.BLACK
+				print '{:4d}      {:10s}      {:5s}      {:10s}      {:>5s}ms'.format(rownum + 1, exp_status, res_status, passmsg if passed else failmsg, time_taken)
 				if not passed:
 					 stdout.write(trml.NORMAL)
 				if passed:
@@ -105,12 +168,24 @@ def check_test_results(column_positions, output_prefix):
 		tsv.close()
 	format = 'TEST RESULTS: ' + trml.GREEN + '%d PASSED ' + trml.RED + '%d FAILED'
 	stdout.write(trml.BOLD)
-	print '--------------------------------------------------------------------'
+	print '-------------------------------------------------------------------------------------------------'
 	print format % (pcount, fcount), trml.BLACK
-	print '--------------------------------------------------------------------'
+	print '-------------------------------------------------------------------------------------------------'
 	print
 	stdout.write(trml.NORMAL)
 
+
+def payload_meets_test_criteria(exp, got):
+	# Exp (expected) is a regex
+	norm = normalize_json(got)
+	"""
+	print got
+	print norm
+	print exp
+	"""
+	return re.match(exp, norm)
+		
+	
 # --------------------------------------------------------------------------------
 # RUN
 
@@ -121,7 +196,16 @@ if __name__ == '__main__':
 	print '----------------'
 	print
 	in_pat  = 'data/api_input*.csv'
-	col_pos = {'method': 0, 'uri': 1, 'payload': 2, 'expected_status': 3, 'expexted_payload': 4, 'result_status': 5, 'result_payload': 6, 'time_taken': 7}
+	col_pos = {
+			'method': 			0,
+			'uri': 				1,
+			'payload': 			2,
+			'expected_status': 	3,
+			'expected_payload': 4,
+			'result_status': 	5,
+			'result_payload': 	6,
+			'time_taken': 		7
+			}
 	out_pre = 'data/api_output'
 	def joinfun(d) : return d 
 	total = process_data(in_pat, col_pos, out_pre, joinfun)

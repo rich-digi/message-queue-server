@@ -187,6 +187,7 @@ function count_messages($dmid)
 	$db = $app->db;
 	$sql = 'SELECT COUNT(MsgID) AS MessageCount FROM '.MESSAGES_TABLE.' WHERE ToDMID="'.$db->e($dmid).'" AND Deleted=0';
 	$res = $db->query_2_object($sql);
+	$res[0]->MessageCount = (int) $res[0]->MessageCount;
 	reply($res[0]);
 }
 
@@ -277,7 +278,7 @@ function delete_message($msgid)
 function reply($reply)
 {
 	$app = \Slim\Slim::getInstance();
-	$app->response()->headers->set('Content-Type', 'application/json');
+	$app->response()->headers->set('Content-Type', 'application/json; charset=utf-8');
 	echo(json_encode($reply, JSON_PRETTY_PRINT));
 }
 
