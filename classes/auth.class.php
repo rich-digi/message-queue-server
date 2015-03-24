@@ -50,13 +50,13 @@ class Auth extends \Slim\Middleware
 		$this->rob->uri 	= $this->app->request()->getResourceUri();
 		$this->rob->method 	= $this->app->request->getMethod();
 		$this->rob->ip 		= $this->app->request->getIp();
-		if (!$this->check_route_access($this->rob))
+		if ($this->check_route_access($this->rob))
 		{
-			$this->access_denied($this->rob);
+			$this->next->call();
 		}
 		else
 		{
-			$this->next->call();
+			$this->access_denied($this->rob);
 		}
     }
     

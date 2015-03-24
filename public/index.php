@@ -41,7 +41,7 @@ $app->container->singleton('log', function ()
     return $log;
 });
 
-// Prepare view hanlers, with Twig templating engine
+// Prepare view hanlders, with Twig templating engine
 $app->view(new \Slim\Views\Twig());
 $app->view->parserOptions = array(
     'charset' 			=> 'utf-8',
@@ -147,7 +147,7 @@ function create_message($dmid)
 	$db = $app->db;
 	$db->fields = array_filter($f);
 	$res = $db->save();
-	$app->response->setStatus(201); // 201 Created
+	$app->response->setStatus(201); // 201 Created - BUT WHAT IF IT FAILS?
 	$app->response->headers->set('Location', $req->getUrl().'/messages/'.$res); // The location of the newly created message
 	reply($res ? array('MsgID' => $res) : errobj('Could not create message'));
 }

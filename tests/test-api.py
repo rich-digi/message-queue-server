@@ -35,6 +35,8 @@ def make_api_call(method, uri, payload):
 			r = requests.post(url, data=payload)
 		elif method == 'PUT':
 			r = requests.put(url, data=payload)
+		elif method == 'PATCH':
+			r = requests.patch(url, data=payload)
 		elif method == 'DELETE':
 			r = requests.delete(url)
 		
@@ -59,7 +61,7 @@ def make_api_call(method, uri, payload):
 
 
 # --------------------------------------------------------------------------------
-# Normalize JSON values
+# Normalize JSON values (compact, sort object keys in alphabetical order)
 
 def normalize_json(str):
 	str = json.dumps(json.loads(str), separators=(',', ':'), sort_keys=True)
@@ -83,7 +85,7 @@ def process_data(input_pattern, column_positions, output_prefix, joiner_function
 	cp = column_positions	
 	total = 0
 	for file in glob.glob(input_pattern):
-		print file
+		print 'Reading tests from', file
 		print
 		fileno = re.match(r'.*(\d+).csv', file)
 		output = open(output_prefix + fileno.group(1) + '.csv', 'wb')
@@ -114,7 +116,7 @@ def process_data(input_pattern, column_positions, output_prefix, joiner_function
 				resline.append(res['payload'].strip())
 				resline.append(res['time'])
 				writer.writerow(joiner_function(resline))
-				total  += 1
+				total += 1
 			rownum += 1
 		inpcsv.close()
 		output.close()
@@ -125,10 +127,14 @@ def process_data(input_pattern, column_positions, output_prefix, joiner_function
 
 def check_test_results(column_positions, output_prefix):
 	stdout.write(trml.BOLD)
+	seperator = '------------------------------------------------------------------------------------------------------'
 	print
-	print '-------------------------------------------------------------------------------------------------'
-	print '{:4s}      {:10s}      {:5s}      {:10s}    {:5s}'.format('Line', 'Expected', 'Got', 'Test', 'Time')
-	print '-------------------------------------------------------------------------------------------------'
+	print 'RESULTS'
+	print seperator
+	print '{:4s}      {:40s}      {:10s}      {:5s}      {:10s}    {:5s}'.format(
+			'Line', 'URI', 'Expected', 'Got', 'Test', 'Time'
+	)
+	print seperator
 	stdout.write(trml.NORMAL)
 	cp = column_positions	
 	passmsg = trml.GREEN + 'PASSED' + trml.BLACK
@@ -136,8 +142,8 @@ def check_test_results(column_positions, output_prefix):
 	pcount = 0
 	fcount = 0
 	for file in glob.glob(output_prefix + '*.csv'):
-		tsv = open(file, 'rU')
-		reader = csv.reader(tsv, delimiter=',')
+		outcsv = open(file, 'rU')
+		reader = csv.reader(outcsv, delimiter=',')
 		rownum = 0
 		for row in reader:
 			extract_cols = range(len(row))
@@ -148,6 +154,7 @@ def check_test_results(column_positions, output_prefix):
 			else:
 				# Extract data from row
 				content = list(row[i] for i in extract_cols)
+				uri  		= content[cp['uri']]
 				exp_status  = content[cp['expected_status']]
 				res_status  = content[cp['result_status']]
 				exp_payload = content[cp['expected_payload']]
@@ -157,7 +164,9 @@ def check_test_results(column_positions, output_prefix):
 				passed = exp_status == res_status and payload_meets_test_criteria(exp_payload, res_payload)
 				if not passed:
 					 stdout.write(trml.BOLD)
-				print '{:4d}      {:10s}      {:5s}      {:10s}      {:>5s}ms'.format(rownum + 1, exp_status, res_status, passmsg if passed else failmsg, time_taken)
+				print '{:4d}      {:40s}      {:10s}      {:5s}      {:10s}      {:>5s}ms'.format(
+						rownum + 1, uri, exp_status, res_status, passmsg if passed else failmsg, time_taken
+				)
 				if not passed:
 					 stdout.write(trml.NORMAL)
 				if passed:
@@ -165,12 +174,12 @@ def check_test_results(column_positions, output_prefix):
 				else:
 					fcount += 1
 			rownum += 1
-		tsv.close()
+		outcsv.close()
 	format = 'TEST RESULTS: ' + trml.GREEN + '%d PASSED ' + trml.RED + '%d FAILED'
 	stdout.write(trml.BOLD)
-	print '-------------------------------------------------------------------------------------------------'
+	print seperator
 	print format % (pcount, fcount), trml.BLACK
-	print '-------------------------------------------------------------------------------------------------'
+	print seperator
 	print
 	stdout.write(trml.NORMAL)
 
@@ -191,9 +200,11 @@ def payload_meets_test_criteria(exp, got):
 
 if __name__ == '__main__':
 	print
+	stdout.write(trml.BOLD)
 	print '----------------'
 	print 'TESTING REST API'
 	print '----------------'
+	stdout.write(trml.NORMAL)
 	print
 	in_pat  = 'data/api_input*.csv'
 	col_pos = {
