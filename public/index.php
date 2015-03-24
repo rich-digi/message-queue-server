@@ -5,7 +5,7 @@
 //
 // MQS: Message Queue Server
 //
-// Uses: Slim, Twig and Monolog + Ink Interface Framework (for built in front-end app at /admin)
+// Uses: Slim, Twig and Monolog + Ink Interface Framework (for built-in front-end app @/admin)
 //
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
