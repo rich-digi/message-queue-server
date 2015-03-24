@@ -21,7 +21,7 @@ class trml:
 
 def make_api_call(method, uri, payload):
 	#
-	# Make a Call to the REST API at uri, using HTTP method, with payload
+	# Make a call to the REST API at uri, using HTTP method, with payload
 	#
 	method = method.upper()
 	url = 'http://' + API_URL + uri
@@ -126,9 +126,9 @@ def process_data(input_pattern, column_positions, output_prefix, joiner_function
 # Check test results
 
 def check_test_results(column_positions, output_prefix):
-	stdout.write(trml.BOLD)
 	seperator = '------------------------------------------------------------------------------------------------------'
 	print
+	stdout.write(trml.BOLD)
 	print 'RESULTS'
 	print seperator
 	print '{:4s}      {:40s}      {:10s}      {:5s}      {:10s}    {:5s}'.format(
