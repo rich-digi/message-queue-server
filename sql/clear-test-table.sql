@@ -1,0 +1,2 @@
+TRUNCATE MessagesTest;
+ALTER TABLE MessagesTest AUTO_INCREMENT = 1;
