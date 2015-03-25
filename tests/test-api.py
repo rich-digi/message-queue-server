@@ -5,7 +5,7 @@
 import glob, csv, string, re
 import requests
 import simplejson as json
-from sys import argv, stdout
+from sys import argv, stdout, exit
 
 API_URL = 'mqs.loc'
 
@@ -13,6 +13,7 @@ class trml:
 	BLACK 	= '\033[30m'
 	RED 	= '\033[31m'
 	GREEN 	= '\033[32m'
+	BLUE 	= '\033[34m'
 	BOLD	= '\033[1m'
 	NORMAL	= '\033[0;0m'
     
@@ -59,29 +60,20 @@ def make_api_call(method, uri, payload):
 
 	return res
 
-
 # --------------------------------------------------------------------------------
 # Normalize JSON values (compact, sort object keys in alphabetical order)
 
 def normalize_json(str):
-	str = json.dumps(json.loads(str), separators=(',', ':'), sort_keys=True)
-	return str
-
-
-# --------------------------------------------------------------------------------
-# Test whether two strings decode to equivalent JSON values
-
-def test_json_equivalence(a, b):
-	a = normalize_json(a)
-	b = normalize_json(b)
-	return a == b
-
-
+	try:
+		str = json.dumps(json.loads(str), separators=(',', ':'), sort_keys=True)
+		return str
+	except json.scanner.JSONDecodeError:
+		return 'Invalid Response - not JSON'
+		
 # --------------------------------------------------------------------------------
 # process_data function
 
 def process_data(input_pattern, column_positions, output_prefix, joiner_function):
-	
 	cp = column_positions	
 	total = 0
 	for file in glob.glob(input_pattern):
@@ -99,7 +91,7 @@ def process_data(input_pattern, column_positions, output_prefix, joiner_function
 			if rownum == 0:
 				# Write header row
 				writer.writerow(joiner_function(content))
-			else:
+			elif len(content):
 				# Extract data from row
 				uri 	= content[cp['uri']]
 				method	= content[cp['method']]
@@ -110,13 +102,15 @@ def process_data(input_pattern, column_positions, output_prefix, joiner_function
 				print '{:7s} {:40s} {:5d}    {:10d}ms'.format(method, uri, res['status'], res['time'])
 				
 				# Record the result
-				resline = content
+				resline = content[:-3] # Exclude the last 3 cols of the input CSV (as they're placeholders for the results)
 				resline[cp['expected_payload']] = resline[cp['expected_payload']].strip()
 				resline.append(res['status'])
 				resline.append(res['payload'].strip())
 				resline.append(res['time'])
 				writer.writerow(joiner_function(resline))
 				total += 1
+			else:
+				print '... blank line skipped ...'
 			rownum += 1
 		inpcsv.close()
 		output.close()
@@ -126,13 +120,13 @@ def process_data(input_pattern, column_positions, output_prefix, joiner_function
 # Check test results
 
 def check_test_results(column_positions, output_prefix):
-	seperator = '------------------------------------------------------------------------------------------------------'
+	seperator = '-' * 109
 	print
 	stdout.write(trml.BOLD)
 	print 'RESULTS'
 	print seperator
-	print '{:4s}      {:40s}      {:10s}      {:5s}      {:10s}    {:5s}'.format(
-			'Line', 'URI', 'Expected', 'Got', 'Test', 'Time'
+	print '{:4s}      {:6s} {:40s}      {:10s}      {:5s}      {:10s}    {:5s}'.format(
+			'Line', 'METHOD', 'URI', 'Expected', 'Got', 'Test', 'Time'
 	)
 	print seperator
 	stdout.write(trml.NORMAL)
@@ -154,6 +148,7 @@ def check_test_results(column_positions, output_prefix):
 			else:
 				# Extract data from row
 				content = list(row[i] for i in extract_cols)
+				method  	= content[cp['method']]
 				uri  		= content[cp['uri']]
 				exp_status  = content[cp['expected_status']]
 				res_status  = content[cp['result_status']]
@@ -161,11 +156,14 @@ def check_test_results(column_positions, output_prefix):
 				res_payload = content[cp['result_payload']]
 				time_taken  = content[cp['time_taken']]
 				
+				if verbosemode:
+					print trml.BOLD + trml.BLUE + 'ROW', rownum + 1, ':', method, uri, trml.BLACK, trml.NORMAL
+				
 				passed = exp_status == res_status and payload_meets_test_criteria(exp_payload, res_payload)
 				if not passed:
 					 stdout.write(trml.BOLD)
-				print '{:4d}      {:40s}      {:10s}      {:5s}      {:10s}      {:>5s}ms'.format(
-						rownum + 1, uri, exp_status, res_status, passmsg if passed else failmsg, time_taken
+				print '{:4d}      {:6s} {:40s}      {:10s}      {:5s}      {:10s}      {:>5s}ms'.format(
+						rownum + 1, method, uri, exp_status, res_status, passmsg if passed else failmsg, time_taken
 				)
 				if not passed:
 					 stdout.write(trml.NORMAL)
@@ -173,6 +171,9 @@ def check_test_results(column_positions, output_prefix):
 					pcount += 1
 				else:
 					fcount += 1
+				if verbosemode:
+					print
+					print seperator
 			rownum += 1
 		outcsv.close()
 	format = 'TEST RESULTS: ' + trml.GREEN + '%d PASSED ' + trml.RED + '%d FAILED'
@@ -183,22 +184,37 @@ def check_test_results(column_positions, output_prefix):
 	print
 	stdout.write(trml.NORMAL)
 
+# --------------------------------------------------------------------------------
+# Test what we got against what we expected
 
 def payload_meets_test_criteria(exp, got):
 	# Exp (expected) is a regex
 	norm = normalize_json(got)
-	"""
-	print got
-	print norm
-	print exp
-	"""
+	if verbosemode:
+		print
+		print 'EXPEXTED   :', exp
+		print 'GOT        :', got
+		print 'NORMALIZED :', norm
+		print
 	return re.match(exp, norm)
 		
-	
+# --------------------------------------------------------------------------------
+# Print help
+
+def print_help():
+	print 'Usage   : python test-api.py [-OPTIONS]'
+	print 'Options : -h print help'
+	print '        : -v run in verbose mode (good for debugging API responses and tests)'
+
 # --------------------------------------------------------------------------------
 # RUN
 
 if __name__ == '__main__':
+	verbosemode = len(argv) > 1 and argv[1] == '-v' # verbose mode
+	if len(argv) > 1:
+		if (argv[1] == '-h'):
+			print_help()
+			exit()
 	print
 	stdout.write(trml.BOLD)
 	print '----------------'

@@ -156,6 +156,9 @@ function create_message($dmid)
 
 function update_message($msgid)
 {
+	if (!check_message_exists($msgid)) return;
+	
+	// Now try to do the update
 	$app = \Slim\Slim::getInstance();
     $request = $app->request();
     $body = $request->getBody();
@@ -163,8 +166,21 @@ function update_message($msgid)
     $f['MsgID'] = $msgid;
 	$db = $app->db;
 	$db->fields = array_filter($f);
-	$res = $db->save();
-	reply($res ? array('Updated' => TRUE) : errobj('Could not update message'));
+	try
+	{
+		$res = $db->update();
+		if (!$res) throw new ResourceNotFoundException();
+	}
+	catch (ResourceNotFoundException $e)
+	{
+		$app->response()->setStatus(400); // Return 400  Bad Request
+	}
+	catch (Exception $e)
+	{
+		$app->response()->setStatus(400);
+		$app->response()->headers->set('X-Status-Reason', $e->getMessage());
+	}
+	reply($res ? array('Updated' => TRUE) : errobj('Could not update message', $db->get_error()));
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -240,7 +256,6 @@ function get_message($msgid)
 		$app->response()->setStatus(400);
 		$app->response()->headers->set('X-Status-Reason', $e->getMessage());
 	}
-
 	reply($res ? $res : errobj('Message with MsgID '.$msgid.' does not exist'));
 }
 
@@ -248,24 +263,26 @@ function get_message($msgid)
 
 function delete_message($msgid)
 {
+	if (!check_message_exists($msgid)) return;
+	
 	$app = \Slim\Slim::getInstance();
 	$db = $app->db;
 	$db->fields = array('MsgID' => $msgid, 'Deleted' => 1);
 	try
 	{
-		$res = $res = $db->save();
+		$res = $db->update();
 		if (!$res) throw new ResourceNotFoundException();
+		// $app->response->setStatus(204); // Don't set 204 deleted if including a response body
 	}
 	catch (ResourceNotFoundException $e)
 	{
-		$app->response()->setStatus(404); // Return 404  Not Found
+		$app->response()->setStatus(400); // Return 404  Not Found
 	}
 	catch (Exception $e)
 	{
 		$app->response()->setStatus(400);
 		$app->response()->headers->set('X-Status-Reason', $e->getMessage());
 	}
-	$app->response->setStatus(204); // 204 Deleted
 	reply($res ? array('Deleted' => TRUE) : errobj('Message with MsgID '.$msgid.' does not exist'));
 }
 
@@ -284,10 +301,33 @@ function reply($reply)
 
 // -------------------------------------------------------------------------------------------------
 
-function errobj($errmsg)
+function errobj($errmsg, $errextra = NULL)
 {
 	$err = new stdClass;
 	$err->Error = TRUE;
 	$err->ErrorMessage = $errmsg;
+	if ($errextra) $err->Details = $errextra;
 	return $err;
+}
+
+// -------------------------------------------------------------------------------------------------
+
+function check_message_exists($msgid)
+{
+	// TODO: Reimplement as route Middleware
+	
+	$app = \Slim\Slim::getInstance();
+	$db = $app->db;
+	try
+	{
+		$sql = 'SELECT MsgID FROM '.MESSAGES_TABLE.' WHERE MsgID='.$db->i($msgid);
+		$res = $db->count_rows($sql);
+		if (!$res) throw new ResourceNotFoundException();
+	}
+	catch (ResourceNotFoundException $e)
+	{
+		$app->response()->setStatus(400); // Return 400  Bad Request
+		reply(errobj('Message with MsgID '.$msgid.' does not exist'));
+	}
+	return $res;
 }

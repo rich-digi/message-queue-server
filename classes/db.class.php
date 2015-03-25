@@ -86,43 +86,43 @@ class DB
 	// -------------------------------------------------------------------------------------------------
 	// Run a query against the database, best for inserts and the like
 
-	public function query($query)
+	public function query($sql)
 	{
 		$this->debug->heading(__FUNCTION__);
 
-		if (is_string($query))
+		if (is_string($sql))
 		{
-			$this->debug->msg($query);
-			$this->mysqli->query($query);
-			$this->handle_errors($query);
-			return $this->affected_rows();
+			$this->debug->msg($sql);
+			$this->mysqli->query($sql);
+			$this->handle_errors($sql);
+			return !$this->mysqli->error;
 		}
 		
 		// Assume query is an array, and treat as a multi_query
-		$this->debug->inspect(NULL, $query);
-		foreach($query as &$q) $q = str_replace(';', '\;', $q);
-		$query = implode(';', $query);
-		$this->mysqli->multi_query($query);
-		$this->handle_errors($query);
-		return $this->affected_rows();
+		$this->debug->inspect(NULL, $sql);
+		foreach($sql as &$s) $s = str_replace(';', '\;', $s);
+		$sql = implode(';', $s);
+		$this->mysqli->multi_query($sql);
+		$this->handle_errors($sql);
+		return !$this->mysqli->error;
 	}
 
 	// ---------------------------------------------------------------------------------------------
 	// Runs a query and returns the result set as an array
 
-	public function query_2_array($query, $type = MYSQL_ASSOC)
+	public function query_2_array($sql, $type = MYSQL_ASSOC)
 	{
 		$this->debug->heading(__FUNCTION__);
-		$this->debug->msg($query);
+		$this->debug->msg($sql);
 
 		$result = array();
-		$myqres = $this->mysqli->query($query);	
+		$myqres = $this->mysqli->query($sql);	
 		if ($myqres)
 		{
 			while($row = $myqres->fetch_array($type)) $result[] = $row;
 			$myqres->free();
 		}
-		$this->handle_errors($query);
+		$this->handle_errors($sql);
 		$this->debug->inspect('First few results...', array_slice($result, 0, 5));
 		return $result;		
 	}
@@ -130,16 +130,16 @@ class DB
 	// ---------------------------------------------------------------------------------------------
 	// Runs a query and returns the result as an object
 	
-	public function query_2_object($query)
+	public function query_2_object($sql)
 	{
 		$this->debug->heading(__FUNCTION__);
-		$this->debug->msg($query);
+		$this->debug->msg($sql);
 
 		$result = array();
-		$myqres = $this->mysqli->query($query);	   
+		$myqres = $this->mysqli->query($sql);	   
 		while($row = $myqres->fetch_object()) $result[] = $row;
 		$myqres->free();
-		$this->handle_errors($query);
+		$this->handle_errors($sql);
 		$this->debug->inspect('First few results...', array_slice($result, 0, 5));
 		return $result;		
 	}
@@ -147,15 +147,15 @@ class DB
 	// ---------------------------------------------------------------------------------------------
 	// Count number of rows query returned ( SELECT )
 
-	public function count_rows($query)
+	public function count_rows($sql)
 	{
 		$this->debug->heading(__FUNCTION__);
-		$this->debug->msg($query);
+		$this->debug->msg($sql);
 
-		$myqres = $this->mysqli->query($query);
+		$myqres = $this->mysqli->query($sql);
 		$rows = $myqres->num_rows;
 		$myqres->free();
-		$this->handle_errors($query);
+		$this->handle_errors($sql);
 		$this->debug->msg($rows . ($rows == 1 ? ' row' : ' rows'));
 		return $rows;
 	}
@@ -216,6 +216,13 @@ class DB
 		return(count($result) ? $result : FALSE);
 	}
 
+	// ---------------------------------------------------------------------------------------------
+	
+	public function get_error()
+	{
+		return $this->mysqli->error;
+	}
+	
 	// ---------------------------------------------------------------------------------------------
 	// SINGLE TABLE CONVENIENCE METHODS
 
@@ -294,14 +301,9 @@ class DB
 	}
 
 	// ---------------------------------------------------------------------------------------------
-	// ---------------------------------------------------------------------------------------------
-	// ---------------------------------------------------------------------------------------------
-	// PRIVATE METHODS
-
-	// ---------------------------------------------------------------------------------------------
 	// Support for 'save' single table convenience methods
 
-	private function add()
+	public function add()
 	{
 		$this->db_write_check();
 		unset($this->fields->{$this->autid}); // Safety feature
@@ -319,7 +321,7 @@ class DB
 	
 	// ---------------------------------------------------------------------------------------------
 
-	private function update()
+	public function update()
 	{
 		$this->db_write_check();
 		$autid = (int) $this->fields[$this->autid];	// Force integer
@@ -327,14 +329,17 @@ class DB
 		$assignments = '';
 		foreach($this->fields as $field => $value) $assignments .= self::tick($field).'="'.$this->mysqli->real_escape_string($value).'", ';
 		$assignments = substr($assignments, 0, -2);
-		$sql = 'UPDATE '.$this->table . ' SET '.$assignments . ' WHERE '.$this->autid.' = '.$autid;
-		$res = $this->query($sql);
+		$this->sql = 'UPDATE '.$this->table . ' SET '.$assignments . ' WHERE '.$this->autid.' = '.$autid;
+		$res = $this->query($this->sql);
 		if (!$res) return FALSE;
 		$this->extract_into_vars($this->fields); // Keep object up to date
 		return($autid);
 	}
 	
 	// ---------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
+	// ---------------------------------------------------------------------------------------------
+	// PRIVATE METHODS
 
 	private function db_read_check()
 	{
@@ -376,13 +381,13 @@ class DB
 	// ---------------------------------------------------------------------------------------------
 	// Error handling functions
 
-	private function handle_errors($extra = '')
+	private function handle_errors($sql = '')
 	{
 		$error = @$this->mysqli->error;
 		if ($error)
 		{
 			$errortext  = '<h3>There has been a SQL error</h3><p><b>Error Text:</b> '.$error.'</p>';
-			// $errortext .= $query = '' ?  '' : '<p><b>SQL String:</b></p><pre>'.$query.'</pre>';
+			$errortext .= $sql = '' ?  '' : '<p><b>SQL String:</b></p><pre>'.$sql.'</pre>';
 			$s = $_SERVER;
 			unset(
 					$s['HTTP_CACHE_CONTROL'], $s['HTTP_CONNECTION'], $s['HTTP_PRAGMA'], $s['HTTP_ACCEPT'],

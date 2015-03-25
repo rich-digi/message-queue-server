@@ -61,6 +61,7 @@ Ink.requireModules(['Ink.Dom.Selector_1', 'Ink.Dom.Event_1', 'Ink.Net.Ajax_1'], 
 				postBody: '',
 				onSuccess: function(xhrObj, req) {
 					Ink.log(xhrObj.responseJSON);
+					alert('Message Deleted');
 					document.location.reload();
 				}, 
 				onFailure: function() {

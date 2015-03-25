@@ -1,10 +1,100 @@
 "method","uri","payload","expected_status","expected_payload","result_status","result_payload","time_taken"
 "GET","/","","200","{""whoami"":""I am MQS, the Message Queue Server at mqs.loc""}","200","{
     ""whoami"": ""I am MQS, the Message Queue Server at mqs.loc""
-}","25"
+}","37"
+"POST","/messages/rich@apewave.com","{""Subject"":""Testing, Testing, 123..."",""Content"":""This is a test. Is anyone receiving me?""}","201","{""MsgID"":\d+}","201","{
+    ""MsgID"": 1
+}","88"
 "POST","/messages/rich@apewave.com","{""Subject"":""Opulent palaces for under a tenner!"",""Content"":""Ever wanted to escape your squalid excuse for a home. Click here!\n\nPALACES FOR UNDER A TENNER!""}","201","{""MsgID"":\d+}","201","{
-    ""MsgID"": 33
-}","28"
+    ""MsgID"": 2
+}","48"
+"POST","/messages/rich@apewave.com","{""Subject"":""Opulent palaces for under a tenner!"",""Content"":""Ever wanted to escape your squalid excuse for a home. Click here!\n\nPALACES FOR UNDER A TENNER!""}","201","{""MsgID"":\d+}","201","{
+    ""MsgID"": 3
+}","47"
 "GET","/messages/rich@apewave.com/count","","200","{""MessageCount"":\d+}","200","{
-    ""MessageCount"": 22
-}","29"
+    ""MessageCount"": 3
+}","49"
+"GET","/messages/rich@apewave.com","","200","\[({""CreatedGMT"":""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"",""From"":.*?,""MsgID"":""\d+"",""Subject"":""[\w!,'\.\- ]*?""},?)+\]","200","[
+    {
+        ""MsgID"": ""3"",
+        ""Subject"": ""Opulent palaces for under a tenner!"",
+        ""From"": null,
+        ""CreatedGMT"": ""2015-03-25 15:18:02""
+    },
+    {
+        ""MsgID"": ""2"",
+        ""Subject"": ""Opulent palaces for under a tenner!"",
+        ""From"": null,
+        ""CreatedGMT"": ""2015-03-25 15:18:01""
+    },
+    {
+        ""MsgID"": ""1"",
+        ""Subject"": ""Testing, Testing, 123..."",
+        ""From"": null,
+        ""CreatedGMT"": ""2015-03-25 15:18:01""
+    }
+]","46"
+"GET","/messages/bamby@bamby.com/count","","200","{""MessageCount"":\d+}","200","{
+    ""MessageCount"": 0
+}","48"
+"GET","/messages/bamby@bamby.com","","404","{.*?""Error"":true,.*?""ErrorMessage"":""DMID bamby@bamby.com, start 0, limit 50, - no matching messages"".*?}","404","{
+    ""Error"": true,
+    ""ErrorMessage"": ""DMID bamby@bamby.com, start 0, limit 50, - no matching messages""
+}","43"
+"GET","/messages/3","","200","{""Content"":""Ever wanted to escape your squalid excuse for a home. Click here!\\n\\nPALACES FOR UNDER A TENNER!"",""CreatedGMT"":""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"",""Creator"":null,""DeleteAfterDays"":""90"",""Deleted"":""0"",""From"":null,""MsgID"":""3"",""Priority"":""5"",""ReadGMT"":null,""ReplyTo"":null,""Subject"":""Opulent palaces for under a tenner!"",""Template"":null,""ToDMID"":""rich@apewave.com""}","200","{
+    ""MsgID"": ""3"",
+    ""ToDMID"": ""rich@apewave.com"",
+    ""From"": null,
+    ""ReplyTo"": null,
+    ""Template"": null,
+    ""Creator"": null,
+    ""Priority"": ""5"",
+    ""CreatedGMT"": ""2015-03-25 15:18:02"",
+    ""ReadGMT"": null,
+    ""DeleteAfterDays"": ""90"",
+    ""Subject"": ""Opulent palaces for under a tenner!"",
+    ""Content"": ""Ever wanted to escape your squalid excuse for a home. Click here!\n\nPALACES FOR UNDER A TENNER!"",
+    ""Deleted"": ""0""
+}","45"
+"GET","/messages/9999999999999","","404","{""Error"":true,""ErrorMessage"":""Message with MsgID 9999999999999 does not exist""}","404","{
+    ""Error"": true,
+    ""ErrorMessage"": ""Message with MsgID 9999999999999 does not exist""
+}","46"
+"PUT","/messages/3","{""Subject"":""Delapidated shacks for under a tenner!"",""Content"":""It's really no more than a shack"",""Priority"":7}","200","{""Updated"":true}","200","{
+    ""Updated"": true
+}","46"
+"PUT","/messages/3","{""Subject"":""Delapidated shacks for under a tenner!"",""Content"":""It's really no more than a shack"",""Priority"":7,""Nodules"":""Many""}","400","{.*?""Error"":true,.*?""ErrorMessage"":""Could not update message"".*?}","400","{
+    ""Error"": true,
+    ""ErrorMessage"": ""Could not update message"",
+    ""Details"": ""Unknown column 'Nodules' in 'field list'""
+}","44"
+"PUT","/messages/9999999999999","{""Subject"":""Delapidated shacks for under a tenner!"",""Content"":""It's really no more than a shack"",""Priority"":7}","400","{""Error"":true,""ErrorMessage"":""Message with MsgID 9999999999999 does not exist""}","400","{
+    ""Error"": true,
+    ""ErrorMessage"": ""Message with MsgID 9999999999999 does not exist""
+}","69"
+"GET","/messages/3","","200","{""Content"":""It's really no more than a shack"",""CreatedGMT"":""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"",""Creator"":null,""DeleteAfterDays"":""90"",""Deleted"":""0"",""From"":null,""MsgID"":""3"",""Priority"":""7"",""ReadGMT"":null,""ReplyTo"":null,""Subject"":""Delapidated shacks for under a tenner!"",""Template"":null,""ToDMID"":""rich@apewave.com""}","200","{
+    ""MsgID"": ""3"",
+    ""ToDMID"": ""rich@apewave.com"",
+    ""From"": null,
+    ""ReplyTo"": null,
+    ""Template"": null,
+    ""Creator"": null,
+    ""Priority"": ""7"",
+    ""CreatedGMT"": ""2015-03-25 15:18:02"",
+    ""ReadGMT"": null,
+    ""DeleteAfterDays"": ""90"",
+    ""Subject"": ""Delapidated shacks for under a tenner!"",
+    ""Content"": ""It's really no more than a shack"",
+    ""Deleted"": ""0""
+}","48"
+"DELETE","/messages/3","","200","{""Deleted"":true}","200","{
+    ""Deleted"": true
+}","52"
+"DELETE","/messages/9999999999999","","400","{""Error"":true,""ErrorMessage"":""Message with MsgID 9999999999999 does not exist""}","400","{
+    ""Error"": true,
+    ""ErrorMessage"": ""Message with MsgID 9999999999999 does not exist""
+}","47"
+"GET","/messages/bamby@bamby.com","","404","{.*?""Error"":true,.*?""ErrorMessage"":""DMID bamby@bamby.com, start 0, limit 50, - no matching messages"".*?}","404","{
+    ""Error"": true,
+    ""ErrorMessage"": ""DMID bamby@bamby.com, start 0, limit 50, - no matching messages""
+}","50"
