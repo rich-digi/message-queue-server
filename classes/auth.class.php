@@ -49,7 +49,16 @@ class Auth extends \Slim\Middleware
 
 		$this->rob->uri 	= $this->app->request()->getResourceUri();
 		$this->rob->method 	= $this->app->request->getMethod();
-		$this->rob->ip 		= $this->app->request->getIp();
+		if ($this->app->config('mode') == 'test' && $this->app->request->headers->get('user-agent') == 'test-api.py')
+		{
+			$this->rob->ip = $this->app->request->headers->get('x-ip-override');
+		}
+		else
+		{
+			$this->rob->ip = $this->app->request->getIp();
+		}	
+	
+		// Now check route access	
 		if ($this->check_route_access($this->rob))
 		{
 			$this->next->call();
@@ -78,8 +87,8 @@ class Auth extends \Slim\Middleware
 				case 'GET':
 					if (in_array($ip, $can_read)) return TRUE;
 					break;
-				case 'PUT':
-					if (preg_match('~^/\d+/markread$~', $uri) && in_array($ip, $can_read)) return TRUE;
+				case 'PATCH':
+					if (preg_match('~^/\d+/markread$~', $tail) && in_array($ip, $can_read)) return TRUE;
 					break;
 				case 'DELETE':
 					if (in_array($ip, $can_read)) return TRUE;

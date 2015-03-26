@@ -1,47 +1,50 @@
-"method","uri","payload","expected_status","expected_payload","result_status","result_payload","time_taken"
-"GET","/","","200","{""whoami"":""I am MQS, the Message Queue Server at mqs.loc""}","200","{
+"ip","method","uri","payload","expected_status","expected_payload","result_status","result_payload","time_taken","result"
+"127.0.0.1","DELETE","/messages/test","","200","{""Cleared"":true}","200","{
+    ""Cleared"": true
+}","76"
+"127.0.0.1","GET","/","","200","{""whoami"":""I am MQS, the Message Queue Server at mqs.loc""}","200","{
     ""whoami"": ""I am MQS, the Message Queue Server at mqs.loc""
-}","297"
-"POST","/messages/rich@apewave.com","{""Subject"":""Testing, Testing, 123..."",""Content"":""This is a test. Is anyone receiving me?""}","201","{""MsgID"":\d+}","201","{
+}","24"
+"127.0.0.1","POST","/messages/rich@apewave.com","{""Subject"":""Testing, Testing, 123..."",""Content"":""This is a test. Is anyone receiving me?""}","201","{""MsgID"":\d+}","201","{
     ""MsgID"": 1
-}","47"
-"POST","/messages/rich@apewave.com","{""Subject"":""Opulent palaces for under a tenner!"",""Content"":""Ever wanted to escape your squalid excuse for a home. Click here!\n\nPALACES FOR UNDER A TENNER!""}","201","{""MsgID"":\d+}","201","{
+}","98"
+"127.0.0.1","POST","/messages/rich@apewave.com","{""Subject"":""Opulent palaces for under a tenner!"",""Content"":""Ever wanted to escape your squalid excuse for a home. Click here!\n\nPALACES FOR UNDER A TENNER!""}","201","{""MsgID"":\d+}","201","{
     ""MsgID"": 2
-}","47"
-"POST","/messages/rich@apewave.com","{""Subject"":""Opulent palaces for under a tenner!"",""Content"":""Ever wanted to escape your squalid excuse for a home. Click here!\n\nPALACES FOR UNDER A TENNER!""}","201","{""MsgID"":\d+}","201","{
+}","29"
+"127.0.0.1","POST","/messages/rich@apewave.com","{""Subject"":""Opulent palaces for under a tenner!"",""Content"":""Ever wanted to escape your squalid excuse for a home. Click here!\n\nPALACES FOR UNDER A TENNER!""}","201","{""MsgID"":\d+}","201","{
     ""MsgID"": 3
-}","48"
-"GET","/messages/rich@apewave.com/count","","200","{""MessageCount"":\d+}","200","{
+}","51"
+"127.0.0.1","GET","/messages/rich@apewave.com/count","","200","{""MessageCount"":\d+}","200","{
     ""MessageCount"": 3
-}","46"
-"GET","/messages/rich@apewave.com","","200","\[({""CreatedGMT"":""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"",""From"":.*?,""MsgID"":""\d+"",""Subject"":""[\w!,'\.\- ]*?""},?)+\]","200","[
+}","28"
+"127.0.0.1","GET","/messages/rich@apewave.com","","200","\[({""CreatedGMT"":""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"",""From"":.*?,""MsgID"":""\d+"",""Subject"":""[\w!,'\.\- ]*?""},?)+\]","200","[
     {
         ""MsgID"": ""3"",
         ""Subject"": ""Opulent palaces for under a tenner!"",
         ""From"": null,
-        ""CreatedGMT"": ""2015-03-25 15:22:03""
+        ""CreatedGMT"": ""2015-03-26 11:59:02""
     },
     {
         ""MsgID"": ""2"",
         ""Subject"": ""Opulent palaces for under a tenner!"",
         ""From"": null,
-        ""CreatedGMT"": ""2015-03-25 15:22:03""
+        ""CreatedGMT"": ""2015-03-26 11:59:02""
     },
     {
         ""MsgID"": ""1"",
         ""Subject"": ""Testing, Testing, 123..."",
         ""From"": null,
-        ""CreatedGMT"": ""2015-03-25 15:22:03""
+        ""CreatedGMT"": ""2015-03-26 11:59:02""
     }
-]","44"
-"GET","/messages/bamby@bamby.com/count","","200","{""MessageCount"":\d+}","200","{
+]","33"
+"127.0.0.1","GET","/messages/bamby@bamby.com/count","","200","{""MessageCount"":\d+}","200","{
     ""MessageCount"": 0
-}","43"
-"GET","/messages/bamby@bamby.com","","404","{.*?""Error"":true,.*?""ErrorMessage"":""DMID bamby@bamby.com, start 0, limit 50, - no matching messages"".*?}","404","{
+}","30"
+"127.0.0.1","GET","/messages/bamby@bamby.com","","404","{.*?""Error"":true,.*?""ErrorMessage"":""DMID bamby@bamby.com, start 0, limit 50, - no matching messages"".*?}","404","{
     ""Error"": true,
     ""ErrorMessage"": ""DMID bamby@bamby.com, start 0, limit 50, - no matching messages""
-}","41"
-"GET","/messages/3","","200","{""Content"":""Ever wanted to escape your squalid excuse for a home. Click here!\\n\\nPALACES FOR UNDER A TENNER!"",""CreatedGMT"":""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"",""Creator"":null,""DeleteAfterDays"":""90"",""Deleted"":""0"",""From"":null,""MsgID"":""3"",""Priority"":""5"",""ReadGMT"":null,""ReplyTo"":null,""Subject"":""Opulent palaces for under a tenner!"",""Template"":null,""ToDMID"":""rich@apewave.com""}","200","{
+}","33"
+"127.0.0.1","GET","/messages/3","","200","{""Content"":""Ever wanted to escape your squalid excuse for a home. Click here!\\n\\nPALACES FOR UNDER A TENNER!"",""CreatedGMT"":""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"",""Creator"":null,""DeleteAfterDays"":""90"",""Deleted"":""0"",""From"":null,""MsgID"":""3"",""Priority"":""5"",""ReadGMT"":null,""ReplyTo"":null,""Subject"":""Opulent palaces for under a tenner!"",""Template"":null,""ToDMID"":""rich@apewave.com""}","200","{
     ""MsgID"": ""3"",
     ""ToDMID"": ""rich@apewave.com"",
     ""From"": null,
@@ -49,30 +52,30 @@
     ""Template"": null,
     ""Creator"": null,
     ""Priority"": ""5"",
-    ""CreatedGMT"": ""2015-03-25 15:22:03"",
+    ""CreatedGMT"": ""2015-03-26 11:59:02"",
     ""ReadGMT"": null,
     ""DeleteAfterDays"": ""90"",
     ""Subject"": ""Opulent palaces for under a tenner!"",
     ""Content"": ""Ever wanted to escape your squalid excuse for a home. Click here!\n\nPALACES FOR UNDER A TENNER!"",
     ""Deleted"": ""0""
-}","45"
-"GET","/messages/9999999999999","","404","{""Error"":true,""ErrorMessage"":""Message with MsgID 9999999999999 does not exist""}","404","{
+}","28"
+"127.0.0.1","GET","/messages/9999999999999","","404","{""Error"":true,""ErrorMessage"":""Message with MsgID 9999999999999 does not exist""}","404","{
     ""Error"": true,
     ""ErrorMessage"": ""Message with MsgID 9999999999999 does not exist""
-}","46"
-"PUT","/messages/3","{""Subject"":""Delapidated shacks for under a tenner!"",""Content"":""It's really no more than a shack"",""Priority"":7}","200","{""Updated"":true}","200","{
+}","31"
+"127.0.0.1","PUT","/messages/3","{""Subject"":""Delapidated shacks for under a tenner!"",""Content"":""It's really no more than a shack"",""Priority"":7}","200","{""Updated"":true}","200","{
     ""Updated"": true
-}","47"
-"PUT","/messages/3","{""Subject"":""Delapidated shacks for under a tenner!"",""Content"":""It's really no more than a shack"",""Priority"":7,""Nodules"":""Many""}","400","{.*?""Error"":true,.*?""ErrorMessage"":""Could not update message"".*?}","400","{
+}","29"
+"127.0.0.1","PUT","/messages/3","{""Subject"":""Delapidated shacks for under a tenner!"",""Content"":""It's really no more than a shack"",""Priority"":7,""Nodules"":""Many""}","400","{.*?""Error"":true,.*?""ErrorMessage"":""Could not update message"".*?}","400","{
     ""Error"": true,
     ""ErrorMessage"": ""Could not update message"",
     ""Details"": ""Unknown column 'Nodules' in 'field list'""
-}","49"
-"PUT","/messages/9999999999999","{""Subject"":""Delapidated shacks for under a tenner!"",""Content"":""It's really no more than a shack"",""Priority"":7}","400","{""Error"":true,""ErrorMessage"":""Message with MsgID 9999999999999 does not exist""}","400","{
+}","33"
+"127.0.0.1","PUT","/messages/9999999999999","{""Subject"":""Delapidated shacks for under a tenner!"",""Content"":""It's really no more than a shack"",""Priority"":7}","400","{""Error"":true,""ErrorMessage"":""Message with MsgID 9999999999999 does not exist""}","400","{
     ""Error"": true,
     ""ErrorMessage"": ""Message with MsgID 9999999999999 does not exist""
-}","44"
-"GET","/messages/3","","200","{""Content"":""It's really no more than a shack"",""CreatedGMT"":""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"",""Creator"":null,""DeleteAfterDays"":""90"",""Deleted"":""0"",""From"":null,""MsgID"":""3"",""Priority"":""7"",""ReadGMT"":null,""ReplyTo"":null,""Subject"":""Delapidated shacks for under a tenner!"",""Template"":null,""ToDMID"":""rich@apewave.com""}","200","{
+}","28"
+"127.0.0.1","GET","/messages/3","","200","{""Content"":""It's really no more than a shack"",""CreatedGMT"":""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"",""Creator"":null,""DeleteAfterDays"":""90"",""Deleted"":""0"",""From"":null,""MsgID"":""3"",""Priority"":""7"",""ReadGMT"":null,""ReplyTo"":null,""Subject"":""Delapidated shacks for under a tenner!"",""Template"":null,""ToDMID"":""rich@apewave.com""}","200","{
     ""MsgID"": ""3"",
     ""ToDMID"": ""rich@apewave.com"",
     ""From"": null,
@@ -80,17 +83,220 @@
     ""Template"": null,
     ""Creator"": null,
     ""Priority"": ""7"",
-    ""CreatedGMT"": ""2015-03-25 15:22:03"",
+    ""CreatedGMT"": ""2015-03-26 11:59:02"",
     ""ReadGMT"": null,
     ""DeleteAfterDays"": ""90"",
     ""Subject"": ""Delapidated shacks for under a tenner!"",
     ""Content"": ""It's really no more than a shack"",
     ""Deleted"": ""0""
-}","43"
-"DELETE","/messages/3","","200","{""Deleted"":true}","200","{
+}","30"
+"127.0.0.1","PATCH","/messages/3/markread","","200","{""MarkedRead"":""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}""}","200","{
+    ""MarkedRead"": ""2015-03-26 11:59:03""
+}","29"
+"127.0.0.1","GET","/messages/3","","200","{""Content"":""It's really no more than a shack"",""CreatedGMT"":""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"",""Creator"":null,""DeleteAfterDays"":""90"",""Deleted"":""0"",""From"":null,""MsgID"":""3"",""Priority"":""7"",""ReadGMT"":""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"",""ReplyTo"":null,""Subject"":""Delapidated shacks for under a tenner!"",""Template"":null,""ToDMID"":""rich@apewave.com""}","200","{
+    ""MsgID"": ""3"",
+    ""ToDMID"": ""rich@apewave.com"",
+    ""From"": null,
+    ""ReplyTo"": null,
+    ""Template"": null,
+    ""Creator"": null,
+    ""Priority"": ""7"",
+    ""CreatedGMT"": ""2015-03-26 11:59:02"",
+    ""ReadGMT"": ""2015-03-26 11:59:03"",
+    ""DeleteAfterDays"": ""90"",
+    ""Subject"": ""Delapidated shacks for under a tenner!"",
+    ""Content"": ""It's really no more than a shack"",
+    ""Deleted"": ""0""
+}","31"
+"127.0.0.1","DELETE","/messages/3","","200","{""Deleted"":true}","200","{
     ""Deleted"": true
-}","45"
-"DELETE","/messages/9999999999999","","400","{""Error"":true,""ErrorMessage"":""Message with MsgID 9999999999999 does not exist""}","400","{
+}","28"
+"127.0.0.1","DELETE","/messages/9999999999999","","400","{""Error"":true,""ErrorMessage"":""Message with MsgID 9999999999999 does not exist""}","400","{
     ""Error"": true,
     ""ErrorMessage"": ""Message with MsgID 9999999999999 does not exist""
-}","45"
+}","31"
+"3.3.3.3","GET","/","","200","{""whoami"":""I am MQS, the Message Queue Server at mqs.loc""}","200","{
+    ""whoami"": ""I am MQS, the Message Queue Server at mqs.loc""
+}","24"
+"3.3.3.3","POST","/messages/rich@apewave.com","{""Subject"":""Testing, Testing, 123..."",""Content"":""This is a test. Is anyone receiving me?""}","401","{""Details"":""Your IP \(3\.3\.3\.3\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (3.3.3.3) can't access this resource""
+}","43"
+"3.3.3.3","POST","/messages/rich@apewave.com","{""Subject"":""Opulent palaces for under a tenner!"",""Content"":""Ever wanted to escape your squalid excuse for a home. Click here!\n\nPALACES FOR UNDER A TENNER!""}","401","{""Details"":""Your IP \(3\.3\.3\.3\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (3.3.3.3) can't access this resource""
+}","25"
+"3.3.3.3","POST","/messages/rich@apewave.com","{""Subject"":""Opulent palaces for under a tenner!"",""Content"":""Ever wanted to escape your squalid excuse for a home. Click here!\n\nPALACES FOR UNDER A TENNER!""}","401","{""Details"":""Your IP \(3\.3\.3\.3\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (3.3.3.3) can't access this resource""
+}","26"
+"3.3.3.3","GET","/messages/rich@apewave.com/count","","200","{""MessageCount"":\d+}","200","{
+    ""MessageCount"": 2
+}","28"
+"3.3.3.3","GET","/messages/rich@apewave.com","","200","\[({""CreatedGMT"":""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"",""From"":.*?,""MsgID"":""\d+"",""Subject"":""[\w!,'\.\- ]*?""},?)+\]","200","[
+    {
+        ""MsgID"": ""2"",
+        ""Subject"": ""Opulent palaces for under a tenner!"",
+        ""From"": null,
+        ""CreatedGMT"": ""2015-03-26 11:59:02""
+    },
+    {
+        ""MsgID"": ""1"",
+        ""Subject"": ""Testing, Testing, 123..."",
+        ""From"": null,
+        ""CreatedGMT"": ""2015-03-26 11:59:02""
+    }
+]","38"
+"3.3.3.3","GET","/messages/bamby@bamby.com/count","","200","{""MessageCount"":\d+}","200","{
+    ""MessageCount"": 0
+}","28"
+"3.3.3.3","GET","/messages/bamby@bamby.com","","404","{.*?""Error"":true,.*?""ErrorMessage"":""DMID bamby@bamby.com, start 0, limit 50, - no matching messages"".*?}","404","{
+    ""Error"": true,
+    ""ErrorMessage"": ""DMID bamby@bamby.com, start 0, limit 50, - no matching messages""
+}","32"
+"3.3.3.3","GET","/messages/3","","200","{""Content"":""It's really no more than a shack"",""CreatedGMT"":""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"",""Creator"":null,""DeleteAfterDays"":""90"",""Deleted"":""1"",""From"":null,""MsgID"":""3"",""Priority"":""7"",""ReadGMT"":""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"",""ReplyTo"":null,""Subject"":""Delapidated shacks for under a tenner!"",""Template"":null,""ToDMID"":""rich@apewave.com""}","200","{
+    ""MsgID"": ""3"",
+    ""ToDMID"": ""rich@apewave.com"",
+    ""From"": null,
+    ""ReplyTo"": null,
+    ""Template"": null,
+    ""Creator"": null,
+    ""Priority"": ""7"",
+    ""CreatedGMT"": ""2015-03-26 11:59:02"",
+    ""ReadGMT"": ""2015-03-26 11:59:03"",
+    ""DeleteAfterDays"": ""90"",
+    ""Subject"": ""Delapidated shacks for under a tenner!"",
+    ""Content"": ""It's really no more than a shack"",
+    ""Deleted"": ""1""
+}","28"
+"3.3.3.3","GET","/messages/9999999999999","","404","{""Error"":true,""ErrorMessage"":""Message with MsgID 9999999999999 does not exist""}","404","{
+    ""Error"": true,
+    ""ErrorMessage"": ""Message with MsgID 9999999999999 does not exist""
+}","43"
+"3.3.3.3","PUT","/messages/3","{""Subject"":""Delapidated shacks for under a tenner!"",""Content"":""It's really no more than a shack"",""Priority"":7}","401","{""Details"":""Your IP \(3\.3\.3\.3\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (3.3.3.3) can't access this resource""
+}","24"
+"3.3.3.3","PUT","/messages/3","{""Subject"":""Delapidated shacks for under a tenner!"",""Content"":""It's really no more than a shack"",""Priority"":7,""Nodules"":""Many""}","401","{""Details"":""Your IP \(3\.3\.3\.3\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (3.3.3.3) can't access this resource""
+}","26"
+"3.3.3.3","PUT","/messages/9999999999999","{""Subject"":""Delapidated shacks for under a tenner!"",""Content"":""It's really no more than a shack"",""Priority"":7}","401","{""Details"":""Your IP \(3\.3\.3\.3\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (3.3.3.3) can't access this resource""
+}","23"
+"3.3.3.3","GET","/messages/3","","200","{""Content"":""It's really no more than a shack"",""CreatedGMT"":""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"",""Creator"":null,""DeleteAfterDays"":""90"",""Deleted"":""1"",""From"":null,""MsgID"":""3"",""Priority"":""7"",""ReadGMT"":""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"",""ReplyTo"":null,""Subject"":""Delapidated shacks for under a tenner!"",""Template"":null,""ToDMID"":""rich@apewave.com""}","200","{
+    ""MsgID"": ""3"",
+    ""ToDMID"": ""rich@apewave.com"",
+    ""From"": null,
+    ""ReplyTo"": null,
+    ""Template"": null,
+    ""Creator"": null,
+    ""Priority"": ""7"",
+    ""CreatedGMT"": ""2015-03-26 11:59:02"",
+    ""ReadGMT"": ""2015-03-26 11:59:03"",
+    ""DeleteAfterDays"": ""90"",
+    ""Subject"": ""Delapidated shacks for under a tenner!"",
+    ""Content"": ""It's really no more than a shack"",
+    ""Deleted"": ""1""
+}","31"
+"3.3.3.3","PATCH","/messages/3/markread","","200","{""MarkedRead"":""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}""}","200","{
+    ""MarkedRead"": ""2015-03-26 11:59:03""
+}","29"
+"3.3.3.3","GET","/messages/3","","200","{""Content"":""It's really no more than a shack"",""CreatedGMT"":""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"",""Creator"":null,""DeleteAfterDays"":""90"",""Deleted"":""1"",""From"":null,""MsgID"":""3"",""Priority"":""7"",""ReadGMT"":""\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}"",""ReplyTo"":null,""Subject"":""Delapidated shacks for under a tenner!"",""Template"":null,""ToDMID"":""rich@apewave.com""}","200","{
+    ""MsgID"": ""3"",
+    ""ToDMID"": ""rich@apewave.com"",
+    ""From"": null,
+    ""ReplyTo"": null,
+    ""Template"": null,
+    ""Creator"": null,
+    ""Priority"": ""7"",
+    ""CreatedGMT"": ""2015-03-26 11:59:02"",
+    ""ReadGMT"": ""2015-03-26 11:59:03"",
+    ""DeleteAfterDays"": ""90"",
+    ""Subject"": ""Delapidated shacks for under a tenner!"",
+    ""Content"": ""It's really no more than a shack"",
+    ""Deleted"": ""1""
+}","38"
+"3.3.3.3","DELETE","/messages/3","","200","{""Deleted"":true}","200","{
+    ""Deleted"": true
+}","29"
+"3.3.3.3","DELETE","/messages/9999999999999","","400","{""Error"":true,""ErrorMessage"":""Message with MsgID 9999999999999 does not exist""}","400","{
+    ""Error"": true,
+    ""ErrorMessage"": ""Message with MsgID 9999999999999 does not exist""
+}","31"
+"1.2.3.4","GET","/","","200","{""whoami"":""I am MQS, the Message Queue Server at mqs.loc""}","200","{
+    ""whoami"": ""I am MQS, the Message Queue Server at mqs.loc""
+}","24"
+"1.2.3.4","POST","/messages/rich@apewave.com","{""Subject"":""Testing, Testing, 123..."",""Content"":""This is a test. Is anyone receiving me?""}","401","{""Details"":""Your IP \(1\.2\.3\.4\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (1.2.3.4) can't access this resource""
+}","26"
+"1.2.3.4","POST","/messages/rich@apewave.com","{""Subject"":""Opulent palaces for under a tenner!"",""Content"":""Ever wanted to escape your squalid excuse for a home. Click here!\n\nPALACES FOR UNDER A TENNER!""}","401","{""Details"":""Your IP \(1\.2\.3\.4\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (1.2.3.4) can't access this resource""
+}","27"
+"1.2.3.4","POST","/messages/rich@apewave.com","{""Subject"":""Opulent palaces for under a tenner!"",""Content"":""Ever wanted to escape your squalid excuse for a home. Click here!\n\nPALACES FOR UNDER A TENNER!""}","401","{""Details"":""Your IP \(1\.2\.3\.4\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (1.2.3.4) can't access this resource""
+}","27"
+"1.2.3.4","GET","/messages/rich@apewave.com/count","","401","{""Details"":""Your IP \(1\.2\.3\.4\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (1.2.3.4) can't access this resource""
+}","23"
+"1.2.3.4","GET","/messages/rich@apewave.com","","401","{""Details"":""Your IP \(1\.2\.3\.4\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (1.2.3.4) can't access this resource""
+}","26"
+"1.2.3.4","GET","/messages/bamby@bamby.com/count","","401","{""Details"":""Your IP \(1\.2\.3\.4\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (1.2.3.4) can't access this resource""
+}","25"
+"1.2.3.4","GET","/messages/bamby@bamby.com","","401","{""Details"":""Your IP \(1\.2\.3\.4\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (1.2.3.4) can't access this resource""
+}","26"
+"1.2.3.4","GET","/messages/3","","401","{""Details"":""Your IP \(1\.2\.3\.4\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (1.2.3.4) can't access this resource""
+}","24"
+"1.2.3.4","GET","/messages/9999999999999","","401","{""Details"":""Your IP \(1\.2\.3\.4\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (1.2.3.4) can't access this resource""
+}","26"
+"1.2.3.4","PUT","/messages/3","{""Subject"":""Delapidated shacks for under a tenner!"",""Content"":""It's really no more than a shack"",""Priority"":7}","401","{""Details"":""Your IP \(1\.2\.3\.4\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (1.2.3.4) can't access this resource""
+}","25"
+"1.2.3.4","PUT","/messages/3","{""Subject"":""Delapidated shacks for under a tenner!"",""Content"":""It's really no more than a shack"",""Priority"":7,""Nodules"":""Many""}","401","{""Details"":""Your IP \(1\.2\.3\.4\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (1.2.3.4) can't access this resource""
+}","25"
+"1.2.3.4","PUT","/messages/9999999999999","{""Subject"":""Delapidated shacks for under a tenner!"",""Content"":""It's really no more than a shack"",""Priority"":7}","401","{""Details"":""Your IP \(1\.2\.3\.4\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (1.2.3.4) can't access this resource""
+}","24"
+"1.2.3.4","GET","/messages/3","","401","{""Details"":""Your IP \(1\.2\.3\.4\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (1.2.3.4) can't access this resource""
+}","26"
+"1.2.3.4","PATCH","/messages/3/markread","","401","{""Details"":""Your IP \(1\.2\.3\.4\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (1.2.3.4) can't access this resource""
+}","25"
+"1.2.3.4","GET","/messages/3","","401","{""Details"":""Your IP \(1\.2\.3\.4\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (1.2.3.4) can't access this resource""
+}","26"
+"1.2.3.4","DELETE","/messages/3","","401","{""Details"":""Your IP \(1\.2\.3\.4\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (1.2.3.4) can't access this resource""
+}","24"
+"1.2.3.4","DELETE","/messages/9999999999999","","401","{""Details"":""Your IP \(1\.2\.3\.4\) can't access this resource"",""Message"":""401 Access Denied""}","401","{
+    ""Message"": ""401 Access Denied"",
+    ""Details"": ""Your IP (1.2.3.4) can't access this resource""
+}","27"
+"127.0.0.1","PUT","/messages/1","{""InVaLiD JSON Dast"": [ {},{},","500","{""Error"":true,""ErrorMessage"":""Invalid JSON Payload""}","500","{
+    ""Error"": true,
+    ""ErrorMessage"": ""Invalid JSON Payload""
+}","39"

@@ -20,7 +20,7 @@ class trml:
 # --------------------------------------------------------------------------------
 # Make API call
 
-def make_api_call(method, uri, payload):
+def make_api_call(method, uri, payload, ip='127.0.0.1'):
 	#
 	# Make a call to the REST API at uri, using HTTP method, with payload
 	#
@@ -30,16 +30,18 @@ def make_api_call(method, uri, payload):
 	
 	try:
 	
+		headers = {'user-agent': 'test-api.py', 'x-ip-override': ip}
+	
 		if method == 'GET':
-			r = requests.get(url, params=payload)
+			r = requests.get(url, headers=headers, params=payload)
 		elif method == 'POST':
-			r = requests.post(url, data=payload)
+			r = requests.post(url, headers=headers, data=payload)
 		elif method == 'PUT':
-			r = requests.put(url, data=payload)
+			r = requests.put(url, headers=headers, data=payload)
 		elif method == 'PATCH':
-			r = requests.patch(url, data=payload)
+			r = requests.patch(url, headers=headers, data=payload)
 		elif method == 'DELETE':
-			r = requests.delete(url)
+			r = requests.delete(url, headers=headers)
 		
 		time_ms = int(round(r.elapsed.microseconds / float(1000), 0)); # Time in milliseconds
 		res	= {
@@ -93,16 +95,17 @@ def process_data(input_pattern, column_positions, output_prefix, joiner_function
 				writer.writerow(joiner_function(content))
 			elif len(content):
 				# Extract data from row
+				ip 		= content[cp['ip']]
 				uri 	= content[cp['uri']]
 				method	= content[cp['method']]
 				payload = content[cp['payload']]
 
 				# Make API call
-				res = make_api_call(method, uri, payload)
-				print '{:7s} {:40s} {:5d}    {:10d}ms'.format(method, uri, res['status'], res['time'])
+				res = make_api_call(method, uri, payload, ip)
+				print '{:12s} {:7s} {:40s} {:5d}    {:10d}ms'.format(ip, method, uri, res['status'], res['time'])
 				
 				# Record the result
-				resline = content[:-3] # Exclude the last 3 cols of the input CSV (as they're placeholders for the results)
+				resline = content[:-4] # Exclude the last 3 cols of the input CSV (as they're placeholders for the results)
 				resline[cp['expected_payload']] = resline[cp['expected_payload']].strip()
 				resline.append(res['status'])
 				resline.append(res['payload'].strip())
@@ -120,13 +123,13 @@ def process_data(input_pattern, column_positions, output_prefix, joiner_function
 # Check test results
 
 def check_test_results(column_positions, output_prefix):
-	seperator = '-' * 109
+	seperator = '-' * 121
 	print
 	stdout.write(trml.BOLD)
 	print 'RESULTS'
 	print seperator
-	print '{:4s}      {:6s} {:40s}      {:10s}      {:5s}      {:10s}    {:5s}'.format(
-			'Line', 'METHOD', 'URI', 'Expected', 'Got', 'Test', 'Time'
+	print '{:4s}     {:12s} {:6s} {:40s}      {:10s}      {:5s}      {:10s}    {:5s}'.format(
+			'Line', 'IP', 'METHOD', 'URI', 'Expected', 'Got', 'Test', 'Time'
 	)
 	print seperator
 	stdout.write(trml.NORMAL)
@@ -148,6 +151,7 @@ def check_test_results(column_positions, output_prefix):
 			else:
 				# Extract data from row
 				content = list(row[i] for i in extract_cols)
+				ip  		= content[cp['ip']]
 				method  	= content[cp['method']]
 				uri  		= content[cp['uri']]
 				exp_status  = content[cp['expected_status']]
@@ -158,12 +162,16 @@ def check_test_results(column_positions, output_prefix):
 				
 				if verbosemode:
 					print trml.BOLD + trml.BLUE + 'ROW', rownum + 1, ':', method, uri, trml.BLACK, trml.NORMAL
+					status_pass  = exp_status == res_status
+					payload_pass = payload_meets_test_criteria(exp_payload, res_payload)
+					passed = status_pass and payload_pass
+				else:
+					passed = exp_status == res_status and payload_meets_test_criteria(exp_payload, res_payload)
 				
-				passed = exp_status == res_status and payload_meets_test_criteria(exp_payload, res_payload)
 				if not passed:
 					 stdout.write(trml.BOLD)
-				print '{:4d}      {:6s} {:40s}      {:10s}      {:5s}      {:10s}      {:>5s}ms'.format(
-						rownum + 1, method, uri, exp_status, res_status, passmsg if passed else failmsg, time_taken
+				print '{:4d}     {:12s} {:6s} {:40s}      {:10s}      {:5s}      {:10s}      {:>5s}ms'.format(
+						rownum + 1, ip, method, uri, exp_status, res_status, passmsg if passed else failmsg, time_taken
 				)
 				if not passed:
 					 stdout.write(trml.NORMAL)
@@ -224,14 +232,16 @@ if __name__ == '__main__':
 	print
 	in_pat  = 'data/api_input*.csv'
 	col_pos = {
-			'method': 			0,
-			'uri': 				1,
-			'payload': 			2,
-			'expected_status': 	3,
-			'expected_payload': 4,
-			'result_status': 	5,
-			'result_payload': 	6,
-			'time_taken': 		7
+			'ip': 				0,
+			'method': 			1,
+			'uri': 				2,
+			'payload': 			3,
+			'expected_status': 	4,
+			'expected_payload': 5,
+			'result_status': 	6,
+			'result_payload': 	7,
+			'time_taken': 		8,
+			'result': 			9,
 			}
 	out_pre = 'data/api_output'
 	def joinfun(d) : return d 

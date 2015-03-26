@@ -21,13 +21,13 @@ class DB
 	const MAILSUBJECT	= 'MQS DB Error Report - Database query failed'; 
 
 	// Class variables
+	public $table;						// Table
 	public $fields;						// Fields to insert
 	public $res;						// Result, representing the row of a single table
 	public $protect_suspend;			// Temporarily suspend logged in checks (read or write)
 	public $logged_in_session_var; 		// A variable in $_SESSION['USER'] that should be TRUE or FALSE
 
 	protected $db_settings;				// Database connections settings object
-	protected $table;					// Table
 	protected $autid;					// Auto-increment id field
 	
 	protected $protect_read;			// Let only logged in users read from the database
@@ -47,7 +47,7 @@ class DB
 		$this->docroot = isset($_SERVER['DOCUMENT_ROOT']) ? $_SERVER['DOCUMENT_ROOT'] : '';
 		$this->docroot = substr($this->docroot, -1) == '/' ? $this->docroot : $this->docroot.'/';
 
-		$this->fields = new stdClass;
+		$this->fields = array();
 
 		$this->debug = new Debug($debugeron);
 		
@@ -101,7 +101,7 @@ class DB
 		// Assume query is an array, and treat as a multi_query
 		$this->debug->inspect(NULL, $sql);
 		foreach($sql as &$s) $s = str_replace(';', '\;', $s);
-		$sql = implode(';', $s);
+		$sql = implode(';', $sql);
 		$this->mysqli->multi_query($sql);
 		$this->handle_errors($sql);
 		return !$this->mysqli->error;
@@ -186,10 +186,13 @@ class DB
 		$this->debug->heading(__FUNCTION__ . '(' . $table . ')');
 
 		if (!$table) $table = $this->$table;
+		$sql = 'SHOW COLUMNS FROM ' . $table;
+		$res = $this->mysqli->query($sql);
+		$this->handle_errors($sql);
+		if (!$res) return $res;
+
 		$result = array();
-		$myqres = $this->mysqli->query('SHOW COLUMNS FROM ' . $table);
-		$result = array();
-		while ($row = $myqres->fetch_array())
+		while ($row = $res->fetch_array())
 		{
 			$result[] = array('name' => $row['Field'], 'type' => $row['Type'], 'default' => $row['Default']);
 		}
@@ -205,10 +208,13 @@ class DB
 		$this->debug->heading(__FUNCTION__ . '(' . $table . ')');
 
 		if (!$table) $table = $this->table;
+		$sql = 'SHOW COLUMNS FROM ' . $table;
+		$res = $this->mysqli->query($sql);
+		$this->handle_errors($sql);
+		if (!$res) return $res;
+		
 		$result = array();
-		$myqres = $this->mysqli->query('SHOW COLUMNS FROM ' . $table);
-		$result = array();
-		while ($row = $myqres->fetch_object())
+		while ($row = $res->fetch_object())
 		{
 			$result[] = (object) array('name' => $row->Field, 'type' => $row->Type, 'default' => $row->Default);
 		}
@@ -232,7 +238,7 @@ class DB
 
 		$this->table = $table;
 		$res = $this->fields_2_object();
-		$this->autid = $res[0]->name;
+		if ($res) $this->autid = $res[0]->name;
 	}
 	
 	// ---------------------------------------------------------------------------------------------
