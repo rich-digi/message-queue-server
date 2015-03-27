@@ -7,7 +7,7 @@ import requests
 import simplejson as json
 from sys import argv, stdout, exit
 
-API_URL = 'mqs.loc'
+API_URL = 'mqs.dev.dmbizclub.com'
 
 class trml:
 	BLACK 	= '\033[30m'

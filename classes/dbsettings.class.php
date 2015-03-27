@@ -34,8 +34,8 @@ class DBsettings
 			case 'DEV':
 				$this->host	= 'localhost';
 				$this->db	= 'mqs_dev';
-				$this->user	= 'optrago77go';
-				$this->pass	= 'go77go77go77	';
+				$this->user	= 'mqs';
+				$this->pass	= 'talktalkedenspirit';
 				break;
 	
 			// ---------------------------

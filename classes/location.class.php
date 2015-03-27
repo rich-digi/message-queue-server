@@ -4,8 +4,8 @@ class Location
 {
 	var $location;
 
-	CONST LIVE_SERVER = 'mqs.dmclub.net';
-	CONST DEV_SERVER  = 'mqs.dev.dmclub.net';
+	CONST LIVE_SERVER = 'mqs.dmbizclub.com';
+	CONST DEV_SERVER  = 'mqs.dev.dmbizclub.com';
 	CONST RICH_K_DEV  = 'mqs.loc';
 	
 	public static function get_location()
