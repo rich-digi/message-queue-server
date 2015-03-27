@@ -21,6 +21,8 @@ define('EMAIL_REGEX', '(?!(?:(?:\\x22?\\x5C[\\x00-\\x7E]\\x22?)|(?:\\x22?[^\\x5C
 define('MESSAGES_TABLE', 		'Messages');
 define('MESSAGES_TEST_TABLE', 	'MessagesTest');
 
+define('TEST_AGENT', 'test-api.py');
+
 require '../vendor/autoload.php';
 require_once '../classes/db.class.php';
 require_once '../classes/auth.class.php';
@@ -37,7 +39,7 @@ $app->add(new Auth\Auth());
 $app->container->singleton('db', function() use ($app)
 {
 	$db = new DB(NULL, TRUE);
-	$testing = $app->config('mode') == 'test' && $app->request->headers->get('user-agent') == 'test-api.py';
+	$testing = $app->config('mode') == 'test' && $app->request->headers->get('user-agent') == TEST_AGENT;
 	$db->set_table($testing ? MESSAGES_TEST_TABLE: MESSAGES_TABLE);
     return $db;
 });
@@ -170,7 +172,7 @@ $app->delete('/messages/test', function () use ($app)
 					'ALTER TABLE '.MESSAGES_TEST_TABLE.' AUTO_INCREMENT = 1'
 				);
 	$res = $db->query($sql);
-	reply($res ? array('Cleared' => TRUE) : errobj('Could not clear test tables: '.$db->get_error()));
+	reply($res ? array('Cleared' => TRUE) : errobj('Could not clear test table: '.$db->get_error()));
 });
 
 
