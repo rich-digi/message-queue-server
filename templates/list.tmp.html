@@ -9,7 +9,7 @@
 				<tr>
 					<th class="align-left">To</th>
 					<th class="align-left">Subject</th>
-					<th class="align-left">Creeated</th>
+					<th class="align-left">Created</th>
 					<th class="align-left">Read</th>
 					<th class="align-left">Controls</th>
 				</tr>
@@ -25,6 +25,10 @@
 						<a href="{{ message.MsgID }}" class="edit"><i class="fa fa-2x fa-pencil-square-o"></i></a>
 						<a href="{{ message.MsgID }}" class="delete"><i class="fa fa-2x fa-trash-o"></i></a>
 					</td>
+				</tr>
+			{% else %}
+ 				<tr>
+					<td colspan=5">No messages</td>
 				</tr>
 			{% endfor %}
 		</tbody>
@@ -58,7 +62,6 @@ Ink.requireModules(['Ink.Dom.Selector_1', 'Ink.Dom.Event_1', 'Ink.Net.Ajax_1'], 
 			var uri = '/messages/'+MsgID;
 			new Ajax(uri, {
 				method: 'DELETE',
-				postBody: '',
 				onSuccess: function(xhrObj, req) {
 					Ink.log(xhrObj.responseJSON);
 					alert('Message Deleted');

@@ -161,7 +161,7 @@ class DB
 	}
 
 	// ---------------------------------------------------------------------------------------------
-	// Count affected rows (UPDATE / DELETE )
+	// Count affected rows ( UPDATE / DELETE )
 
 	public function affected_rows()
 	{

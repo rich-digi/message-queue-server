@@ -77,7 +77,7 @@ class ResourceNotFoundException extends Exception {}
 // ---------------------
 
 // @ GET /
-// Identify
+// Identify API
 //
 $app->get('/', 'identify');
 
@@ -118,23 +118,35 @@ $app->patch('/messages/:msgid/markread', 'mark_message_read');
 // @ DELETE /messages/<MSGID>
 // Mark message as deleted
 //
-$app->delete('/messages/:msgid', 'delete_message')->conditions(array('msgid' => '\d+'));;
+$app->delete('/messages/:msgid', 'delete_message')->conditions(array('msgid' => '\d+'));
 
 
 // (2) MQS admin area routes...
 // ----------------------------
 
+// @ GET /admin
+// Display the admin dashboard
+//
 $app->get('/admin', function () use ($app)
 {
 	// $app->log->info("MQS '/admin' route");
 	$app->render('dashboard.tmp.html', array('name' => 'Rich', 'v' => 'dashboard'));
 });
 
+// @ GET /admin/create
+// Display a form to create a message
+//
 $app->get('/admin/create', function () use ($app)
 {
 	$app->render('create.tmp.html', array('name' => 'Rich', 'v' => 'create'));
 });
 
+// @ GET /admin/list
+// List the last 50 messages
+//
+// @ GET /admin/list/<EMAIL>
+// List the last 50 messages for <EMAIL>
+//
 $app->get('/admin/list(/:dmid)', function ($dmid = 'all@all.all') use ($app)
 {
 	$ch = curl_init();
@@ -146,6 +158,9 @@ $app->get('/admin/list(/:dmid)', function ($dmid = 'all@all.all') use ($app)
 	$app->render('list.tmp.html', array('name' => 'Rich', 'v' => 'list', 'default_ToDMID' => $dmid, 'messages' => $res));
 });
 
+// @ GET /admin/edit/<MSGID>
+// Display a form to edit message <MSGID>
+//
 $app->get('/admin/edit/:msgid', function ($msgid) use ($app)
 {
 	$ch = curl_init();
@@ -163,6 +178,7 @@ $app->get('/admin/edit/:msgid', function ($msgid) use ($app)
 // --------------------------------------------------------------------
 
 // @ DELETE /messages/test
+// Delete the messages in the test table
 // 
 $app->delete('/messages/test', function () use ($app)
 {
